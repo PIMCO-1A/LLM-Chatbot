@@ -1,8 +1,30 @@
 import os
 import pandas as pd
 
-# Set the path to your data folder
 data_folder_path = "/Users/mayzheng/Library/CloudStorage/GoogleDrive-mayzheng@g.ucla.edu/.shortcut-targets-by-id/1l6Ivj88DSwtaBno_3NISgPRWZGGHxlo9/Team PIMCO 1A/nport data"
+
+schema_file_path = "Table_Schema.txt"
+
+def load_schema(schema_file):
+    """
+    Parse the schema file to extract table and column details.
+    """
+    schema = {}
+    current_table = None
+    
+    with open(schema_file, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("Table:"):
+                # Start a new table
+                current_table = line.split(':')[1].strip().split()[0]
+                schema[current_table] = []
+            elif line.startswith('-') and current_table:
+                # Add columns to the current table
+                column = line.split('(')[0].replace('-', '').strip()
+                schema[current_table].append(column)
+    
+    return schema
 
 def extract_year_and_quarter(folder_name):
     """
@@ -27,10 +49,14 @@ def load_and_process_data():
     Generator that loads and processes data files from the specified data folder.
     Includes:
     - Extracting year and quarter
-    - Propagating missing CUSIP values
+    - Propagating missing CUSIP values (if applicable)
     - Filtering rows with valid CUSIPs
     - Dropping rows with completely missing CUSIPs
     """
+    # Load schema
+    schema = load_schema(schema_file_path)
+    print("Loaded schema:", schema)
+    
     print("Starting to load and process data...")
     for root, dirs, files in os.walk(data_folder_path):
         folder_name = os.path.basename(root)
@@ -48,9 +74,19 @@ def load_and_process_data():
                     print(f"Error reading file {file}: {e}")
                     continue
                 
-                # Check if the table has a CUSIP column
+                # Get table name and validate schema
+                table_name = os.path.splitext(file)[0]
+                if table_name not in schema:
+                    print(f"Skipping table not found in schema: {table_name}")
+                    continue
+                
+                # Validate columns
+                valid_columns = schema[table_name]
+                df = df[[col for col in df.columns if col in valid_columns]]
+                
+                # Skip tables without a CUSIP column
                 if 'CUSIP' not in df.columns:
-                    print(f"Skipping table without CUSIP column: {file}")
+                    print(f"Skipping table '{table_name}' as it does not have a CUSIP column.")
                     continue
                 
                 # Add new columns for year and quarter
@@ -63,4 +99,4 @@ def load_and_process_data():
                 # Drop rows with missing CUSIP values
                 df = df.dropna(subset=['CUSIP'])
                 
-                yield df, os.path.splitext(file)[0]  # Yield processed data and table name
+                yield df, table_name  # Yield processed data and table name
