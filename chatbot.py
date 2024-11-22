@@ -8,28 +8,158 @@ from pathlib import Path
 from api_connection import openai_message_creator, query_openai, schema_to_string, process_prompt_for_quarter_year
 from data_loading import load_schema
 
-# Load environment variables
+# load env variables
 load_dotenv()
 API_KEY = os.getenv("OPENAI_API_KEY")
 openai.api_key = API_KEY
 
-# Set up database path
+# db path
 db_path = Path("data/sec_nport_data_subset.db")
 
 # Load the schema
 schema_file_path = "Table_Schema.txt"
 schema = load_schema(schema_file_path)
 
-# Streamlit App Title
+# app title
 st.title("PIMCO Bot")
 
-# Initialize chat history and persistent query log
+# Example prompts and queries to guide chatbot behavior
+example_prompts_and_queries = [
+    {
+        "question": "Find all fund-reported holdings where the issuer name contains 'Wells Fargo' in Quarter 1 of 2024.",
+        "query": """
+        SELECT *
+        FROM FUND_REPORTED_HOLDING
+        WHERE ISSUER_NAME LIKE '%Wells Fargo%' AND YEAR = 2024 AND QUARTER = 1;
+        """
+    },
+    {
+        "question": "Retrieve the LEI and total liabilities of all funds reported in Quarter 3 of 2023.",
+        "query": """
+        SELECT SERIES_LEI, TOTAL_LIABILITIES
+        FROM FUND_REPORTED_INFO
+        WHERE YEAR = 2023 AND QUARTER = 3;
+        """
+    },
+    {
+        "question": "List all borrower names with an aggregate value greater than $1,000,000 in Quarter 2 of 2022.",
+        "query": """
+        SELECT NAME, AGGREGATE_VALUE
+        FROM BORROWER
+        WHERE AGGREGATE_VALUE > 1000000 AND YEAR = 2022 AND QUARTER = 2;
+        """
+    },
+    {
+        "question": "Find the interest rate risk changes for 1-year maturity reported in Quarter 4 of 2021.",
+        "query": """
+        SELECT INTRST_RATE_CHANGE_1YR_DV01, INTRST_RATE_CHANGE_1YR_DV100
+        FROM INTEREST_RATE_RISK
+        WHERE YEAR = 2021 AND QUARTER = 4;
+        """
+    },
+    {
+        "question": "Retrieve the top 10 fund holdings by balance in Quarter 3 of 2020, sorted in descending order.",
+        "query": """
+        SELECT ISSUER_NAME, BALANCE
+        FROM FUND_REPORTED_HOLDING
+        WHERE YEAR = 2020 AND QUARTER = 3
+        ORDER BY BALANCE DESC
+        LIMIT 10;
+        """
+    },
+    {
+        "question": "List the names of borrowers who provided collateral valued over $500,000 in Quarter 1 of 2023.",
+        "query": """
+        SELECT NAME, COLLATERAL
+        FROM BORROW_AGGREGATE
+        WHERE COLLATERAL > 500000 AND YEAR = 2023 AND QUARTER = 1;
+        """
+    },
+    {
+        "question": "Find the cumulative unrealized appreciation for all derivative instruments in Quarter 2 of 2024.",
+        "query": """
+        SELECT SUM(UNREALIZED_APPRECIATION) AS TOTAL_UNREALIZED_APPRECIATION
+        FROM OTHER_DERIV
+        WHERE YEAR = 2024 AND QUARTER = 2;
+        """
+    },
+    {
+        "question": "List the fund-reported holdings with a balance greater than 1% of net assets in Quarter 4 of 2022.",
+        "query": """
+        SELECT ISSUER_NAME, BALANCE, PERCENTAGE
+        FROM FUND_REPORTED_HOLDING
+        WHERE PERCENTAGE > 1 AND YEAR = 2022 AND QUARTER = 4;
+        """
+    },
+    {
+        "question": "Retrieve the repurchase agreements with maturity dates in Quarter 3 of 2023.",
+        "query": """
+        SELECT TRANSACTION_TYPE, REPURCHASE_RATE, MATURITY_DATE
+        FROM REPURCHASE_AGREEMENT
+        WHERE YEAR = 2023 AND QUARTER = 3;
+        """
+    },
+    {
+        "question": "Find the number of fund-reported holdings by currency for Quarter 1 of 2021.",
+        "query": """
+        SELECT CURRENCY_CODE, COUNT(*) AS HOLDING_COUNT
+        FROM FUND_REPORTED_HOLDING
+        WHERE YEAR = 2021 AND QUARTER = 1
+        GROUP BY CURRENCY_CODE;
+        """
+    },
+    {
+        "question": "Retrieve the names of counterparties for securities lending with non-cash collateral in Quarter 2 of 2023.",
+        "query": """
+        SELECT NAME, NON_CASH_COLLATERAL_VALUE
+        FROM SECURITIES_LENDING
+        WHERE IS_NON_CASH_COLLATERAL = 'Yes' AND YEAR = 2023 AND QUARTER = 2;
+        """
+    },
+    {
+        "question": "List the total realized and unrealized gains for derivatives in Quarter 4 of 2020.",
+        "query": """
+        SELECT SUM(NET_REALIZED_GAIN_MON1 + NET_REALIZED_GAIN_MON2 + NET_REALIZED_GAIN_MON3) AS TOTAL_REALIZED_GAIN,
+               SUM(NET_UNREALIZED_AP_MON1 + NET_UNREALIZED_AP_MON2 + NET_UNREALIZED_AP_MON3) AS TOTAL_UNREALIZED_GAIN
+        FROM MONTHLY_RETURN_CAT_INSTRUMENT
+        WHERE YEAR = 2020 AND QUARTER = 4;
+        """
+    },
+    {
+        "question": "Find the LEI and assets for all funds with net assets greater than $10,000,000 in Quarter 3 of 2022.",
+        "query": """
+        SELECT SERIES_LEI, NET_ASSETS
+        FROM FUND_REPORTED_INFO
+        WHERE NET_ASSETS > 10000000 AND YEAR = 2022 AND QUARTER = 3;
+        """
+    },
+    {
+        "question": "List all debt securities in default during Quarter 2 of 2021.",
+        "query": """
+        SELECT HOLDING_ID, COUPON_TYPE, ANNUALIZED_RATE
+        FROM DEBT_SECURITY
+        WHERE IS_DEFAULT = 'Yes' AND YEAR = 2021 AND QUARTER = 2;
+        """
+    },
+    {
+        "question": "Retrieve the total returns for all classes during Quarter 1 of 2023.",
+        "query": """
+        SELECT CLASS_ID, (MONTHLY_TOTAL_RETURN1 + MONTHLY_TOTAL_RETURN2 + MONTHLY_TOTAL_RETURN3) AS TOTAL_RETURN
+        FROM MONTHLY_TOTAL_RETURN
+        WHERE YEAR = 2023 AND QUARTER = 1;
+        """
+    }
+]
+
+
+
+# initialize chat history and persistent query log
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "persistent_query_log" not in st.session_state:
     st.session_state.persistent_query_log = []
 
-# Function to execute SQL query with debugging
+# function to execute SQL query w debugging
 def execute_sql_query(query, db_path):
     """
     Executes the provided SQL query against the SQLite database at db_path.
@@ -54,7 +184,7 @@ def execute_sql_query(query, db_path):
         print(f"Error executing the SQL query: {e}")
         return None
 
-# Function to validate SQL query
+# function to validate SQL query
 def validate_sql_query(query):
     """
     Validates that the SQL query is well-formed and safe to execute.
@@ -64,7 +194,7 @@ def validate_sql_query(query):
         return True
     return False
 
-# Display persistent query log
+# display persistent query log
 if "persistent_query_log" in st.session_state and st.session_state.persistent_query_log:
     for query_record in st.session_state.persistent_query_log:
         st.write("#### Question")
@@ -76,7 +206,7 @@ if "persistent_query_log" in st.session_state and st.session_state.persistent_qu
         st.write("#### Results")
         st.dataframe(query_record["results"])
 
-# User input
+# user input
 if prompt := st.chat_input("Enter your question about the database:"):
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -85,22 +215,22 @@ if prompt := st.chat_input("Enter your question about the database:"):
     refined_prompt = process_prompt_for_quarter_year(prompt)
     refined_prompt = f"Generate an SQL query for this request: '{refined_prompt}'. Return only the query and an explanation."
 
-    # Generate OpenAI messages with schema
+    # Generate OpenAI messages with schema and examples
     system_message_string = f"""
     You are an assistant that generates SQL queries based on user questions related to the N-PORT dataset. 
-    Use the provided database schema to ensure accurate queries. Respond in the following format:
-    SQL Query:
-    [Generated SQL Query]
+    Use the provided database schema and the following examples as a reference to ensure accurate queries. 
 
-    Explanation:
-    [Explanation of the Query]
+    Examples:
+    {example_prompts_and_queries}
+
+    Schema Details:
+    {schema_to_string(schema)}
 
     Rules:
     1. Only use `QUARTER` and `YEAR` in the SQL query. Do not use any specific dates. Use the `QUARTER` and `YEAR` columns directly, and do not use any functions like QUARTER() or YEAR().
     2. Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
     """
-    system_message_with_schema = f"{system_message_string}\n\n### Schema Details:\n{schema_to_string(schema)}"
-    messages = openai_message_creator(user_message_string=refined_prompt, system_message_string=system_message_with_schema, schema=schema)
+    messages = openai_message_creator(user_message_string=refined_prompt, system_message_string=system_message_string, schema=schema)
 
     response = query_openai(messages)
 
@@ -163,15 +293,6 @@ if prompt := st.chat_input("Enter your question about the database:"):
 
 
 
-
-
-
-
-
-
-
-
-
 # import os
 # import sqlite3
 # import pandas as pd
@@ -182,56 +303,28 @@ if prompt := st.chat_input("Enter your question about the database:"):
 # from api_connection import openai_message_creator, query_openai, schema_to_string, process_prompt_for_quarter_year
 # from data_loading import load_schema
 
-# # Load environment variables
+# # load env variables
 # load_dotenv()
 # API_KEY = os.getenv("OPENAI_API_KEY")
 # openai.api_key = API_KEY
 
-# # Set up database path
+# # db path
 # db_path = Path("data/sec_nport_data_subset.db")
 
-# # loading schema
+# # Load the schema
 # schema_file_path = "Table_Schema.txt"
 # schema = load_schema(schema_file_path)
 
-# # app title 
+# # app title
 # st.title("PIMCO Bot")
 
-# # Initialize chat history
+# # initialize chat history and persistent query log
 # if "messages" not in st.session_state:
 #     st.session_state.messages = []
-# if "query_history" not in st.session_state:
-#     st.session_state.query_history = []
+# if "persistent_query_log" not in st.session_state:
+#     st.session_state.persistent_query_log = []
 
-# # Define the system message for the OpenAI API
-# system_message_string = """
-# You are an assistant that generates SQL queries based on user questions related to the N-PORT dataset. 
-# Use the provided database schema to ensure accurate queries. Respond in the following format:
-# SQL Query:
-# [Generated SQL Query]
-
-# Explanation:
-# [Explanation of the Query]
-
-# Rules:
-# 1. Only use `QUARTER` and `YEAR` in the SQL query. Do not use any specific dates. Use the `QUARTER` and `YEAR` columns directly, and do not use any functions like QUARTER() or YEAR().
-# 2. Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
-# """
-
-# # Chat history display
-# for message in st.session_state.messages:
-#     with st.chat_message(message["role"]):
-#         st.markdown(message["content"])
-
-# # Display query history at the top of the app
-# st.markdown("### Query History")
-# for query_record in st.session_state.query_history:
-#     st.markdown(f"- **SQL Query:** `{query_record['query']}`")
-#     st.markdown(f"  **Explanation:** {query_record['explanation']}")
-#     st.markdown(f"  **Results:**")
-#     st.dataframe(query_record["results"])
-
-# # Function to execute SQL query with debugging
+# # function to execute SQL query w debugging
 # def execute_sql_query(query, db_path):
 #     """
 #     Executes the provided SQL query against the SQLite database at db_path.
@@ -256,7 +349,7 @@ if prompt := st.chat_input("Enter your question about the database:"):
 #         print(f"Error executing the SQL query: {e}")
 #         return None
 
-# # Function to validate SQL query
+# # function to validate SQL query
 # def validate_sql_query(query):
 #     """
 #     Validates that the SQL query is well-formed and safe to execute.
@@ -266,24 +359,47 @@ if prompt := st.chat_input("Enter your question about the database:"):
 #         return True
 #     return False
 
-# # User input
+# # display persistent query log
+# if "persistent_query_log" in st.session_state and st.session_state.persistent_query_log:
+#     for query_record in st.session_state.persistent_query_log:
+#         st.write("#### Question")
+#         st.markdown(query_record["question"])
+#         st.write("#### SQL Query")
+#         st.code(query_record["query"], language="sql")
+#         st.write("#### Explanation")
+#         st.markdown(query_record["explanation"])
+#         st.write("#### Results")
+#         st.dataframe(query_record["results"])
+
+# # user input
 # if prompt := st.chat_input("Enter your question about the database:"):
+#     # Add user message to chat history
+#     st.session_state.messages.append({"role": "user", "content": prompt})
+    
 #     # Process specific dates or date ranges in the prompt
 #     refined_prompt = process_prompt_for_quarter_year(prompt)
 #     refined_prompt = f"Generate an SQL query for this request: '{refined_prompt}'. Return only the query and an explanation."
 
-#     # Display user message in chat history
-#     st.chat_message("user").markdown(prompt)
-#     st.session_state.messages.append({"role": "user", "content": prompt})
-
 #     # Generate OpenAI messages with schema
+#     system_message_string = f"""
+#     You are an assistant that generates SQL queries based on user questions related to the N-PORT dataset. 
+#     Use the provided database schema to ensure accurate queries. Respond in the following format:
+#     SQL Query:
+#     [Generated SQL Query]
+
+#     Explanation:
+#     [Explanation of the Query]
+
+#     Rules:
+#     1. Only use `QUARTER` and `YEAR` in the SQL query. Do not use any specific dates. Use the `QUARTER` and `YEAR` columns directly, and do not use any functions like QUARTER() or YEAR().
+#     2. Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
+#     """
 #     system_message_with_schema = f"{system_message_string}\n\n### Schema Details:\n{schema_to_string(schema)}"
 #     messages = openai_message_creator(user_message_string=refined_prompt, system_message_string=system_message_with_schema, schema=schema)
 
 #     response = query_openai(messages)
 
 #     if response:
-
 #         # Clean the response to extract the SQL query and explanation
 #         if "Explanation:" in response:
 #             sql_query, explanation = response.split("Explanation:", 1)
@@ -303,36 +419,30 @@ if prompt := st.chat_input("Enter your question about the database:"):
 #             df_result = execute_sql_query(cleaned_sql_query, db_path)
             
 #             if df_result is not None:
-#                 # Save query, explanation, and results to history
-#                 st.session_state.query_history.append({
+#                 # Save query, explanation, and results to persistent query log
+#                 query_record = {
+#                     "question": prompt,
 #                     "query": cleaned_sql_query,
 #                     "explanation": explanation,
 #                     "results": df_result
-#                 })
+#                 }
+#                 st.session_state.persistent_query_log.append(query_record)
 
-#                 # Display results
-#                 st.write("Query Results:")
-#                 st.dataframe(df_result)
+#                 # Display SQL query, explanation, and results
+#                 st.write("#### Question")
+#                 st.markdown(query_record["question"])
+#                 st.write("#### SQL Query")
+#                 st.code(query_record["query"], language="sql")
+#                 st.write("#### Explanation")
+#                 st.markdown(query_record["explanation"])
+#                 st.write("#### Results")
+#                 st.dataframe(query_record["results"])
 #             else:
 #                 st.error("Failed to execute the query. Check the logs for details.")
 #         else:
 #             # If the query is invalid, show an error message
 #             st.error("Invalid SQL query generated. Please review.")
-#             print("Invalid SQL query detected. Aborting execution.")
 #     else:
-#         st.session_state.messages.append({"role": "assistant", "content": "No response available."})
-
-
-
-
-
-
-
-
-
-
-
-
-
+#         st.error("No response generated. Please try again.")
 
 
