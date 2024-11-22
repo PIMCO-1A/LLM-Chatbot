@@ -148,6 +148,130 @@ example_prompts_and_queries = [
         FROM MONTHLY_TOTAL_RETURN
         WHERE YEAR = 2023 AND QUARTER = 1;
         """
+    },
+    {
+        "question": "Find the issuer name, balance, and percentage of holdings exceeding 5% of net assets for funds with total assets over $100,000,000 in Quarter 2 of 2023.",
+        "query": """
+        SELECT FRH.ISSUER_NAME, FRH.BALANCE, FRH.PERCENTAGE
+        FROM FUND_REPORTED_HOLDING FRH
+        JOIN FUND_REPORTED_INFO FRI ON FRH.ACCESSION_NUMBER = FRI.ACCESSION_NUMBER
+        WHERE FRI.TOTAL_ASSETS > 100000000 AND FRH.PERCENTAGE > 5 AND FRH.YEAR = 2023 AND FRH.QUARTER = 2;
+        """
+    },
+    {
+        "question": "List all fund-reported holdings with unrealized depreciation (negative unrealized appreciation) in Quarter 4 of 2021, sorted by descending depreciation.",
+        "query": """
+        SELECT ISSUER_NAME, UNREALIZED_APPRECIATION
+        FROM OTHER_DERIV
+        WHERE UNREALIZED_APPRECIATION < 0 AND YEAR = 2021 AND QUARTER = 4
+        ORDER BY UNREALIZED_APPRECIATION ASC;
+        """
+    },
+    {
+        "question": "Retrieve the average repurchase rate for repurchase agreements across all funds in Quarter 1 of 2022.",
+        "query": """
+        SELECT AVG(REPURCHASE_RATE) AS AVG_REPURCHASE_RATE
+        FROM REPURCHASE_AGREEMENT
+        WHERE YEAR = 2022 AND QUARTER = 1;
+        """
+    },
+    {
+        "question": "Find the top 5 issuers by aggregate value of securities on loan in Quarter 3 of 2024.",
+        "query": """
+        SELECT NAME, AGGREGATE_VALUE
+        FROM BORROWER
+        WHERE YEAR = 2024 AND QUARTER = 3
+        ORDER BY AGGREGATE_VALUE DESC
+        LIMIT 5;
+        """
+    },
+    {
+        "question": "List the currency codes and their total notional amounts for all foreign currency swaps in Quarter 2 of 2023.",
+        "query": """
+        SELECT CURRENCY_CODE, SUM(NOTIONAL_AMOUNT) AS TOTAL_NOTIONAL_AMOUNT
+        FROM FWD_FOREIGNCUR_CONTRACT_SWAP
+        WHERE YEAR = 2023 AND QUARTER = 2
+        GROUP BY CURRENCY_CODE;
+        """
+    },
+    {
+        "question": "Retrieve all securities lending records where cash collateral value exceeds loan value in Quarter 4 of 2020.",
+        "query": """
+        SELECT IS_CASH_COLLATERAL, CASH_COLLATERAL_AMOUNT, LOAN_VALUE
+        FROM SECURITIES_LENDING
+        WHERE CASH_COLLATERAL_AMOUNT > LOAN_VALUE AND YEAR = 2020 AND QUARTER = 4;
+        """
+    },
+    {
+        "question": "Find the total liabilities and net assets for each series name, grouped by series, for Quarter 3 of 2021.",
+        "query": """
+        SELECT SERIES_NAME, SUM(TOTAL_LIABILITIES) AS TOTAL_LIABILITIES, SUM(NET_ASSETS) AS TOTAL_NET_ASSETS
+        FROM FUND_REPORTED_INFO
+        WHERE YEAR = 2021 AND QUARTER = 3
+        GROUP BY SERIES_NAME;
+        """
+    },
+    {
+        "question": "Retrieve the issuer names and CUSIP codes for all debt securities with an annualized rate above 5% in Quarter 1 of 2024.",
+        "query": """
+        SELECT DS.ISSUER_NAME, DS.CUSIP
+        FROM DEBT_SECURITY DS
+        WHERE DS.ANNUALIZED_RATE > 5 AND DS.YEAR = 2024 AND DS.QUARTER = 1;
+        """
+    },
+    {
+        "question": "List the derivative counterparties and their LEIs with unrealized appreciation greater than $1,000,000 in Quarter 2 of 2023.",
+        "query": """
+        SELECT DC.DERIVATIVE_COUNTERPARTY_NAME, DC.DERIVATIVE_COUNTERPARTY_LEI, SUM(OD.UNREALIZED_APPRECIATION) AS TOTAL_APPRECIATION
+        FROM DERIVATIVE_COUNTERPARTY DC
+        JOIN OTHER_DERIV OD ON DC.HOLDING_ID = OD.HOLDING_ID
+        WHERE OD.UNREALIZED_APPRECIATION > 1000000 AND DC.YEAR = 2023 AND DC.QUARTER = 2
+        GROUP BY DC.DERIVATIVE_COUNTERPARTY_NAME, DC.DERIVATIVE_COUNTERPARTY_LEI;
+        """
+    },
+    {
+        "question": "Find the total value and count of holdings by issuer type in Quarter 4 of 2022.",
+        "query": """
+        SELECT ISSUER_TYPE, SUM(CURRENCY_VALUE) AS TOTAL_VALUE, COUNT(*) AS HOLDING_COUNT
+        FROM FUND_REPORTED_HOLDING
+        WHERE YEAR = 2022 AND QUARTER = 4
+        GROUP BY ISSUER_TYPE;
+        """
+    },
+    {
+        "question": "Retrieve the name, ticker, and value of the top 10 index components by notional amount in Quarter 3 of 2023.",
+        "query": """
+        SELECT NAME, TICKER, VALUE
+        FROM DESC_REF_INDEX_COMPONENT
+        WHERE YEAR = 2023 AND QUARTER = 3
+        ORDER BY NOTIONAL_AMOUNT DESC
+        LIMIT 10;
+        """
+    },
+    {
+        "question": "Find all issuers with holdings marked as restricted securities in Quarter 1 of 2021.",
+        "query": """
+        SELECT ISSUER_NAME, IS_RESTRICTED_SECURITY
+        FROM FUND_REPORTED_HOLDING
+        WHERE IS_RESTRICTED_SECURITY = 'Yes' AND YEAR = 2021 AND QUARTER = 1;
+        """
+    },
+    {
+        "question": "Retrieve the total principal amounts and their currencies for repurchase collateral in Quarter 2 of 2024.",
+        "query": """
+        SELECT PRINCIPAL_CURRENCY_CODE, SUM(PRINCIPAL_AMOUNT) AS TOTAL_PRINCIPAL_AMOUNT
+        FROM REPURCHASE_COLLATERAL
+        WHERE YEAR = 2024 AND QUARTER = 2
+        GROUP BY PRINCIPAL_CURRENCY_CODE;
+        """
+    },
+    {
+        "question": "List the narrative descriptions of all index baskets reported in Quarter 4 of 2020.",
+        "query": """
+        SELECT NARRATIVE_DESC
+        FROM DESC_REF_INDEX_BASKET
+        WHERE YEAR = 2020 AND QUARTER = 4;
+        """
     }
 ]
 
