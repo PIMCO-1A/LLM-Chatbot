@@ -18,33 +18,19 @@ def save_to_database(engine, data, table_name):
     except Exception as e:
         print(f"Error saving data to table '{table_name}': {e}")
 
-def sample_cusips(data, sample_size):
+def drop_high_missing_columns(data, threshold=85):
     """
-    Randomly samples unique CUSIPs from the data.
-    If the number of unique CUSIPs is less than the sample size, sample all available CUSIPs.
+    Drops columns with more than a given percentage of missing values,
+    ensuring that the 'cusip' column is never dropped.
     """
-    unique_cusips = data['CUSIP'].drop_duplicates()
-    actual_sample_size = min(len(unique_cusips), sample_size)  # Adjust the sample size if necessary
-    return unique_cusips.sample(n=actual_sample_size, random_state=42)
+    # Calculate the percentage of missing values
+    missing_percent = data.isnull().mean() * 100
 
-def filter_by_cusips(data, sampled_cusips):
-    """
-    Filters the data to include only rows with sampled CUSIPs.
-    """
-    return data[data['CUSIP'].isin(sampled_cusips)]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # Identify columns to drop, excluding 'cusip'
+    columns_to_drop = [
+        col for col in missing_percent[missing_percent > threshold].index
+        if col != 'cusip'
+    ]
+    
+    # Drop the columns
+    return data.drop(columns=columns_to_drop)
