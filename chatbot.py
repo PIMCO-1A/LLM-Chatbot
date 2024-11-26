@@ -268,8 +268,6 @@ if prompt := st.chat_input("Enter your question about the database:"):
     {[example for example in example_prompts_and_queries['easy']]}
     - Medium:
     {[example for example in example_prompts_and_queries['medium']]}
-    - Hard:
-    {[example for example in example_prompts_and_queries['hard']]}
 
     Rules:
     1. Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
