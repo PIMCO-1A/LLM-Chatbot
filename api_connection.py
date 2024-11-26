@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from sqlalchemy import create_engine
 from pathlib import Path
-from data_loading import load_schema
+from schema_loader import load_schema
 
 # Load environment variables
 load_dotenv()
@@ -12,7 +12,7 @@ API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=API_KEY)
 
 # Load the schema
-schema_file_path = "Table_Schema.txt"
+schema_file_path = "data_schema2.txt"
 schema = load_schema(schema_file_path)
 
 def schema_to_string(schema):

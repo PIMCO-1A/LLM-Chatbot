@@ -6,7 +6,7 @@ import openai
 from dotenv import load_dotenv
 from pathlib import Path
 from api_connection import openai_message_creator, query_openai, schema_to_string, process_prompt_for_quarter_year
-from data_loading import load_schema
+from schema_loader import load_schema
 
 # load env variables
 load_dotenv()
@@ -14,10 +14,10 @@ API_KEY = os.getenv("OPENAI_API_KEY")
 openai.api_key = API_KEY
 
 # db path
-db_path = Path("data/sec_nport_data_subset.db")
+db_path = Path("data/sec_nport_data_combined.db")
 
 # Load the schema
-schema_file_path = "Table_Schema.txt"
+schema_file_path = "data_schema2.txt"
 schema = load_schema(schema_file_path)
 
 # app title
@@ -341,7 +341,11 @@ if prompt := st.chat_input("Enter your question about the database:"):
 
     # Generate OpenAI messages with schema and examples
     system_message_string = f"""
-    You are an assistant that generates SQL queries based on user questions related to the N-PORT dataset. 
+    You are an assistant that generates SQL queries based on user questions related to the SEC N-PORT dataset. 
+    
+    N-PORT filings contain detailed reports submitted by registered investment companies, including mutual funds and exchange-traded funds (ETFs), which disclose their portfolio holdings on a monthly basis. 
+    These filings provide transparency into the asset composition, performance, and risk exposures of these funds, offering valuable insights for investors, regulators, and researchers.
+
     Use the provided database schema and the following examples as a reference to ensure accurate queries. 
 
     Examples:
@@ -351,7 +355,7 @@ if prompt := st.chat_input("Enter your question about the database:"):
     {schema_to_string(schema)}
 
     Rules:
-    1. Only use `QUARTER` and `YEAR` in the SQL query. Do not use any specific dates. Use the `QUARTER` and `YEAR` columns directly, and do not use any functions like QUARTER() or YEAR().
+    1. Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter. Use the `QUARTER` and `YEAR` columns directly, and do not use any functions like QUARTER() or YEAR(). 
     2. Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
     """
     messages = openai_message_creator(user_message_string=refined_prompt, system_message_string=system_message_string, schema=schema)
