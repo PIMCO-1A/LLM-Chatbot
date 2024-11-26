@@ -3,9 +3,9 @@ import json
 from pathlib import Path
 
 # Paths
-db_path = Path("data/sec_nport_data_subset.db")
+db_path = Path("data/sec_nport_data_combined.db")
 metadata_path = Path("data/nport_metadata.json")
-schema_file_path = Path("data_schema.txt")
+schema_file_path = Path("data_schema2.txt")
 
 
 def load_metadata(metadata_path):

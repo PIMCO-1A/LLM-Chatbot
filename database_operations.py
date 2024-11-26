@@ -21,16 +21,11 @@ def save_to_database(engine, data, table_name):
 def drop_high_missing_columns(data, threshold=85):
     """
     Drops columns with more than a given percentage of missing values,
-    ensuring that the 'cusip' column is never dropped.
+    ensuring that columns containing 'CUSIP' are never dropped.
     """
-    # Calculate the percentage of missing values
     missing_percent = data.isnull().mean() * 100
-
-    # Identify columns to drop, excluding 'cusip'
     columns_to_drop = [
         col for col in missing_percent[missing_percent > threshold].index
-        if col != 'cusip'
+        if 'CUSIP' not in col.upper()
     ]
-    
-    # Drop the columns
     return data.drop(columns=columns_to_drop)

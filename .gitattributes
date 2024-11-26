@@ -1,3 +1,4 @@
 data/sec_nport_data.db filter=lfs diff=lfs merge=lfs -text
 data/sec_nport_data_subset.db filter=lfs diff=lfs merge=lfs -text
+data/sec_nport_data_combined.db filter=lfs diff=lfs merge=lfs -text
 *.db filter=lfs diff=lfs merge=lfs -text
