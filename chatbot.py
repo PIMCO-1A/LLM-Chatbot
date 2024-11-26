@@ -185,6 +185,28 @@ example_prompts_and_queries = {
             "schema_links": "FUT_FWD_NONFOREIGNCUR_CONTRACT.HOLDING_ID = FUND_REPORTED_INFO.HOLDING_ID, FUND_REPORTED_INFO.SERIES_NAME, FUND_REPORTED_INFO.NET_UNREALIZE_AP_NONDERIV_MON1, FUND_REPORTED_INFO.NET_UNREALIZE_AP_NONDERIV_MON2, FUND_REPORTED_INFO.NET_UNREALIZE_AP_NONDERIV_MON3, FUT_FWD_NONFOREIGNCUR_CONTRACT.HOLDING_ID, FUND_REPORTED_INFO.HOLDING_ID, FUND_REPORTED_INFO.YEAR, FUND_REPORTED_INFO.QUARTER, PIMCO, Vanguard, 2023, 3"
         }
     ]
+    "hard": [
+        {
+            "question": "Find the top 3 issuers with the highest notional amounts in derivative contracts for Q3 2023.",
+            "query": """
+            SELECT ISSUER_NAME, TotalNotional
+            FROM (
+                SELECT ISSUER_NAME, SUM(NOTIONAL_AMOUNT) AS TotalNotional
+                FROM FUT_FWD_NONFOREIGNCUR_CONTRACT
+                WHERE YEAR = 2023 AND QUARTER = 3
+                GROUP BY ISSUER_NAME
+            ) AS IssuerNotional
+            ORDER BY TotalNotional DESC
+            FETCH FIRST 3 ROWS ONLY;
+            """,
+            "reasoning": """
+            Let's think step by step. The SQL query for the question "Find the top 3 issuers with the highest notional amounts in derivative contracts for Q3 2023" needs these tables = [FUT_FWD_NONFOREIGNCUR_CONTRACT].
+            Plus, it requires nested queries to answer the questions = ["What is the total notional amount for each issuer in Q3 2023?"].
+            So, we don't need JOINs but do need nested queries, then the SQL query can be classified as "HARD".
+            """,
+            "schema_links": "FUT_FWD_NONFOREIGNCUR_CONTRACT.ISSUER_NAME, FUT_FWD_NONFOREIGNCUR_CONTRACT.NOTIONAL_AMOUNT, FUT_FWD_NONFOREIGNCUR_CONTRACT.YEAR, FUT_FWD_NONFOREIGNCUR_CONTRACT.QUARTER"
+        }
+    ]
 }
 
 
@@ -268,6 +290,8 @@ if prompt := st.chat_input("Enter your question about the database:"):
     {[example for example in example_prompts_and_queries['easy']]}
     - Medium:
     {[example for example in example_prompts_and_queries['medium']]}
+    - Hard:
+    {[example for example in example_prompts_and_queries['hard']]}
 
     Rules:
     1. Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
