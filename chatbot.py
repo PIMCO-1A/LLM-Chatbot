@@ -17,7 +17,7 @@ openai.api_key = API_KEY
 db_path = Path("data/sec_nport_data_combined.db")
 
 # Load the schema
-schema_file_path = "data_schema2.txt"
+schema_file_path = "data/data_schema2.txt"
 schema = load_schema(schema_file_path)
 
 # app title
