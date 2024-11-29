@@ -220,7 +220,8 @@ if "persistent_query_log" not in st.session_state:
 def execute_sql_query(query, db_path):
     """
     Executes the provided SQL query against the SQLite database at db_path.
-    Logs the query being executed for debugging purposes.
+    Logs the query being executed for debugging purposes. If there's an error,
+    it attempts to fix the query.
     """
     try:
         # Connect to the SQLite database
@@ -239,7 +240,63 @@ def execute_sql_query(query, db_path):
     except Exception as e:
         # Log the error
         print(f"Error executing the SQL query: {e}")
-        return None
+        # Generate the query-fixing prompt using the given details
+        query_fixing_prompt = f"""
+        **Task Description:**
+        You are an SQL database expert tasked with correcting a SQL query. A previous attempt to run a query did not yield the correct results,
+        either due to errors in execution or because the result returned was empty or unexpected. Your role is to analyze the error based on 
+        the provided database schema and the details of the failed execution, and then provide a corrected version of the SQL query. 
+
+        **Procedure:**
+        1. Review Database Schema
+        - Examine the following schema details to understand the database structure:
+        {schema_to_string(schema)}
+        2. Review Example User Questions, Queries, and Explanations
+        - Examine the following examples as a reference to guide your corrected response:
+            - Easy Questions: {[example for example in example_prompts_and_queries['easy']]}
+            - Medium Questions: {[example for example in example_prompts_and_queries['medium']]}
+            - Hard Questions: {[example for example in example_prompts_and_queries['hard']]}
+        3. Analyze Query Requirements:
+        - Original Question: Consider what information the query is supposed to retrieve.
+        - Executed SQL Query: Review the SQL query that was previously executed and led to an error or incorrect result.
+        - Execution Result: Analyze the outcome of the executed query to identify why it failed (e.g., syntax errors, incorrect column references, logical mistakes).
+        4. Adhere to Rules:
+        - Remember the rules you must follow:
+            - Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
+            - Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
+            - All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
+            - When you start the Explanation you need to put “Explanation:” before it
+        5. Correct the Query:
+        - Modify the SQL query to address the identified issues, ensuring it correctly fetches the requested data according to the database schema and query requirements.
+
+        **Output Format**
+        [SQL Query]
+        Explanation: [Explanation of SQL Query]
+        
+        Based on the question, table schema, and previous query, analyze the result to fix the query and make it valid and executable.
+        """
+        
+        # Query OpenAI to fix the query
+        fixing_response = query_openai(openai_message_creator(
+            user_message_string=query_fixing_prompt,
+            system_message_string="You are an expert SQL assistant. Review the SQL query for errors and provide corrections with explanations."
+        ))
+        
+        if fixing_response:
+            # Parse the response to extract the suggested corrected query and explanation
+            if "Explanation:" in fixing_response:
+                fixed_query, explanation = fixing_response.split("Explanation:", 1)
+                fixed_query = fixed_query.strip()
+                explanation = explanation.strip()
+            else:
+                fixed_query = fixing_response.strip()
+                explanation = "No explanation provided."
+            
+            # Return the fixed query and explanation
+            return fixed_query, explanation
+        
+        # If no response, return the error message
+        return f"Error: {e}", None
 
 # function to validate SQL query
 def validate_sql_query(query):
@@ -280,7 +337,7 @@ if prompt := st.chat_input("Enter your question about the database:"):
     **Background:**
     N-PORT filings contain detailed reports submitted by registered investment companies, including mutual funds and exchange-traded funds (ETFs), which disclose their portfolio holdings on a monthly basis. 
     These filings provide transparency into the asset composition, performance, and risk exposures of these funds, offering valuable insights for investors, regulators, and researchers.
-    Your goal is to write and execute SQL queries on a SQLite3 database to answer natural language questions asked by the user. 
+    Your goal is to write and execute SQL queries on a SQLite database to answer natural language questions asked by the user. 
 
     **Procedure**
     1. Review Database Schema
@@ -303,7 +360,7 @@ if prompt := st.chat_input("Enter your question about the database:"):
     **Rules:**
     1. Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
     2. Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
-    3. Use the command LIMIT instead of FETCH
+    3. All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
     4. When you start the Explanation you need to put “Explanation:” before it
     """
     messages = openai_message_creator(user_message_string=refined_prompt, system_message_string=system_message_string, schema=schema)
