@@ -11,4 +11,4 @@ PIMCO is an established player in this industry but specifically in the fixed in
 - Ensure that the output is not only accurate but also credible, providing sufficient supporting data points and justifications
 
 ### Acknowledgements
-A big thank you to Break Through Tech AI Studio and TA Dhakshina Ilango as well as PIMCO representatives Tarek Nassar, Anshan He, Gaurav Sharma, Kameron MacKenzie, and Steven Agajanian for your mentorship and guidance throughout our learning journey.
+A big thank you to Break Through Tech AI Studio and TA Dhakshina Ilango as well as PIMCO representatives Gaurav Sharma, Tarek Nassar, Kameron MacKenzie, Anshan He, and Steven Agajanian for your mentorship and guidance throughout our learning journey.
