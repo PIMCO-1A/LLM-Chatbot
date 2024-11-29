@@ -69,21 +69,18 @@ example_prompts_and_queries = {
             "schema_links": "FUT_FWD_NONFOREIGNCUR_CONTRACT.ISSUER_NAME, FUT_FWD_NONFOREIGNCUR_CONTRACT.UNREALIZED_APPRECIATION, FUT_FWD_NONFOREIGNCUR_CONTRACT.YEAR, FUT_FWD_NONFOREIGNCUR_CONTRACT.QUARTER, 2022, 1"
         },
         {
-            "question": "Find the top 5 issuers by cumulative notional amount of derivatives in 2022.",
+            "question": "What are the total net assets for all funds in Q2 2023?",
             "query": """
-            SELECT ISSUER_NAME
-            FROM FUT_FWD_NONFOREIGNCUR_CONTRACT
-            WHERE YEAR = 2022
-            GROUP BY ISSUER_NAME
-            ORDER BY SUM(NOTIONAL_AMOUNT) DESC
-            FETCH FIRST 5 ROWS ONLY;
+            SELECT SUM(NET_ASSETS)
+            FROM FUND_REPORTED_INFO
+            WHERE YEAR = 2023 AND QUARTER = 2;
             """,
             "reasoning": """
-            Let's think step by step. The SQL query for the question "Find the top 5 issuers by cumulative notional amount of derivatives in 2022" needs these tables = [FUT_FWD_NONFOREIGNCUR_CONTRACT], so we don't need JOIN.
+            Let's think step by step. The SQL query for the question "What are the total net assets for all funds in Q2 2023?" needs this table = [FUND_REPORTED_INFO], so we don't need JOINs.
             Plus, it doesn't require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
-            So, we don't need JOIN and don't need nested queries, then the SQL query can be classified as "EASY".
+            So, we don't need JOINs and don't need nested queries, then the SQL query can be classified as "EASY."
             """,
-            "schema_links": "FUT_FWD_NONFOREIGNCUR_CONTRACT.ISSUER_NAME, FUT_FWD_NONFOREIGNCUR_CONTRACT.NOTIONAL_AMOUNT, FUT_FWD_NONFOREIGNCUR_CONTRACT.YEAR, 2022"
+            "schema_links": "FUND_REPORTED_INFO.NET_ASSETS, FUND_REPORTED_INFO.YEAR, FUND_REPORTED_INFO.QUARTER, 2023, 2"
         },
         {
             "question": "Find the maturity dates for repurchase agreements in 2022 Q3.",
@@ -104,14 +101,14 @@ example_prompts_and_queries = {
             "query": """
             SELECT CURRENCY_VALUE
             FROM FUND_REPORTED_HOLDING
-            WHERE SERIES_NAME = 'Tennant Co' AND YEAR = 2022 AND QUARTER = 4;
+            WHERE ISSUER_NAME = 'Tennant Co' AND YEAR = 2022 AND QUARTER = 4;
             """,
             "reasoning": """
             Let's think step by step. The SQL query for the question "What is the currency value of holdings for Tennant Co in Q4 2022?" needs these tables = [FUND_REPORTED_HOLDING], so we don't need JOIN.
             Plus, it doesn't require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
             So, we don't need JOIN and don't need nested queries, then the SQL query can be classified as "EASY".
             """,
-            "schema_links": "FUND_REPORTED_HOLDING.CURRENCY_VALUE, FUND_REPORTED_HOLDING.SERIES_NAME, FUND_REPORTED_HOLDING.YEAR, FUND_REPORTED_HOLDING.QUARTER, Tennant Co, 2022, 4"
+            "schema_links": "FUND_REPORTED_HOLDING.CURRENCY_VALUE, FUND_REPORTED_HOLDING.ISSUER_NAME, FUND_REPORTED_HOLDING.YEAR, FUND_REPORTED_HOLDING.QUARTER, Tennant Co, 2022, 4"
         }
     ],
     "medium": [
