@@ -119,89 +119,52 @@ example_prompts_and_queries = {
             FROM FUND_REPORTED_HOLDING frh
             JOIN FUND_REPORTED_INFO fri ON frh.ACCESSION_NUMBER = fri.ACCESSION_NUMBER
             JOIN SUBMISSION sub ON fri.ACCESSION_NUMBER = sub.ACCESSION_NUMBER
-            WHERE fri.SERIES_NAME = 'Vanguard Total Bond Market Index Fund'
+            WHERE fri.SERIES_NAME LIKE '%Vanguard Total Bond Market Index Fund%'
             ORDER BY sub.REPORT_DATE DESC
-            FETCH FIRST 1 ROW ONLY;
+            LIMIT 1;
             """,
             "reasoning": """
-            Let's think step by step. The SQL query for the question "What are the cash holdings of the Vanguard Total Bond Market Index Fund as of the latest reporting date?" needs these tables = [FUND_REPORTED_HOLDING, FUND_REPORTED_INFO, SUBMISSION], so we need JOIN.
-            Plus, it doesn't require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
-            So, we need JOIN and don't need nested queries, then the SQL query can be classified as "MEDIUM".
+            Let’s think step by step. The SQL query for the question "What are the cash holdings of the Vanguard Total Bond Market Index Fund as of the latest reporting date?" needs these tables = [FUND_REPORTED_HOLDING, FUND_REPORTED_INFO, SUBMISSION], so we need JOIN.
+            Plus, it doesn’t require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
+            So, we need JOIN and don’t need nested queries, then the SQL query can be classified as "MEDIUM".
             """,
             "schema_links": "FUND_REPORTED_INFO.ACCESSION_NUMBER = FUND_REPORTED_HOLDING.ACCESSION_NUMBER, SUBMISSION.ACCESSION_NUMBER = fri.ACCESSION_NUMBER, FUND_REPORTED_HOLDING.BALANCE, FUND_REPORTED_INFO.SERIES_NAME, SUBMISSION.REPORT_DATE, Vanguard Total Bond Market Index Fund"
         },
         {
-            "question": "What is the percentage allocation to derivatives for all funds in Q4 2023?",
+            "question": "Compare derivative allocation trends for Fidelity funds from 2020 to 2023.",
             "query": """
-            SELECT
-                fri.SERIES_NAME,
-                (SUM(dric.NOTIONAL_AMOUNT) / fri.TOTAL_ASSETS) * 100 AS PercentageAllocationToDerivatives
+            SELECT fri.SERIES_NAME, ffnc.YEAR, SUM(ffnc.NOTIONAL_AMOUNT) / SUM(fri.TOTAL_ASSETS) * 100 AS DerivativeAllocationPercentage
             FROM FUND_REPORTED_INFO fri
-            JOIN DESC_REF_INDEX_COMPONENT dric ON fri.ACCESSION_NUMBER = dric.ACCESSION_NUMBER
-            JOIN SUBMISSION sub ON fri.ACCESSION_NUMBER = sub.ACCESSION_NUMBER
-            WHERE fri.QUARTER = 4 AND fri.YEAR = 2023
-            GROUP BY fri.SERIES_NAME, fri.TOTAL_ASSETS;
+            JOIN FUND_REPORTED_HOLDING frh ON fri.ACCESSION_NUMBER = frh.ACCESSION_NUMBER
+            JOIN FUT_FWD_NONFOREIGNCUR_CONTRACT ffnc ON frh.HOLDING_ID = ffnc.HOLDING_ID
+            WHERE fri.SERIES_NAME LIKE '%Fidelity%' AND ffnc.YEAR BETWEEN 2020 AND 2023
+            GROUP BY fri.SERIES_NAME, ffnc.YEAR
+            ORDER BY fri.SERIES_NAME, ffnc.YEAR;
             """,
             "reasoning": """
-            Let's think step by step. The SQL query for the question "What is the percentage allocation to derivatives for all funds in Q4 2023?" needs these tables = [FUND_REPORTED_INFO, DESC_REF_INDEX_COMPONENT, SUBMISSION], so we need JOIN.
-            Plus, it doesn't require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
-            So, we need JOIN and don't need nested queries, then the SQL query can be classified as "MEDIUM".
+            Let’s think step by step. The SQL query for the question "Compare derivative allocation trends for Fidelity funds from 2020 to 2023" needs these tables = [FUND_REPORTED_INFO, FUND_REPORTED_HOLDING, FUT_FWD_NONFOREIGNCUR_CONTRACT], so we need JOINs on ACCESSION_NUMBER and HOLDING_ID.
+            Plus, it doesn’t require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
+            So, we need JOIN and don't need nested queries, then the SQL query can be classified as "MEDIUM."
             """,
-            "schema_links": "FUND_REPORTED_INFO.ACCESSION_NUMBER = DESC_REF_INDEX_COMPONENT.ACCESSION_NUMBER, SUBMISSION.ACCESSION_NUMBER = FUND_REPORTED_INFO.ACCESSION_NUMBER, FUND_REPORTED_INFO.SERIES_NAME, DESC_REF_INDEX_COMPONENT.NOTIONAL_AMOUNT, FUND_REPORTED_INFO.TOTAL_ASSETS, FUND_REPORTED_INFO.ACCESSION_NUMBER, DESC_REF_INDEX_COMPONENT.ACCESSION_NUMBER, SUBMISSION.ACCESSION_NUMBER, FUND_REPORTED_HOLDING.QUARTER, FUND_REPORTED_HOLDING.YEAR, 4, 2023"
+            "schema_links": "FUND_REPORTED_INFO.SERIES_NAME, FUND_REPORTED_INFO.TOTAL_ASSETS, FUND_REPORTED_HOLDING.HOLDING_ID, FUT_FWD_NONFOREIGNCUR_CONTRACT.NOTIONAL_AMOUNT, FUT_FWD_NONFOREIGNCUR_CONTRACT.YEAR, FUND_REPORTED_INFO.ACCESSION_NUMBER = FUND_REPORTED_HOLDING.ACCESSION_NUMBER, FUND_REPORTED_HOLDING.HOLDING_ID = FUT_FWD_NONFOREIGNCUR_CONTRACT.HOLDING_ID, %Fidelity%, 2020, 2023"
         },
         {
-            "question": "What is the cash collateral value for Qorvo Inc. in Q3 2022?",
+            "question": "What is the currency-wise allocation of restricted securities in Q1 2023?",
             "query": """
-            SELECT rc.COLLATERAL_AMOUNT,
-            FROM REPURCHASE_COLLATERAL rc
-            JOIN SECURITIES_LENDING sl ON rc.HOLDING_ID = sl.HOLDING_ID
-            JOIN FUND_REPORTED_INFO fri ON sl.HOLDING_ID = fri.HOLDING_ID
-            WHERE fri.SERIES_NAME = 'Qorvo Inc.' AND sl.IS_CASH_COLLATERAL = 'Y' AND rc.YEAR = 2022 AND rc.QUARTER = 3;
+            SELECT frh.CURRENCY_CODE,
+                SUM(frh.CURRENCY_VALUE) AS TotalRestrictedValue,
+                (SUM(frh.CURRENCY_VALUE) / SUM(fri.TOTAL_ASSETS)) * 100 AS RestrictedPercentage
+            FROM FUND_REPORTED_HOLDING frh
+            JOIN FUND_REPORTED_INFO fri ON frh.ACCESSION_NUMBER = fri.ACCESSION_NUMBER
+            WHERE frh.IS_RESTRICTED_SECURITY = 'Y' AND fri.YEAR = 2023 AND fri.QUARTER = 1
+            GROUP BY frh.CURRENCY_CODE;
             """,
             "reasoning": """
-            Let's think step by step. The SQL query for the question "What is the collateral amount for Qorvo Inc. in Q3 2022 that is cash collateral?" needs these tables = [REPURCHASE_COLLATERAL, SECURITIES_LENDING, FUND_REPORTED_INFO], so we need JOIN.
-            Plus, it doesn't require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
-            So, we need JOIN and don't need nested queries, then the SQL query can be classified as "MEDIUM".
+            Let’s think step by step. The SQL query for the question "What is the currency-wise allocation of restricted securities in Q1 2023?" needs these tables = [FUND_REPORTED_HOLDING, FUND_REPORTED_INFO], so we need JOIN on ACCESSION_NUMBER.
+            Plus, it doesn’t require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
+            So, we need JOIN and don't need nested queries, then the SQL query can be classified as "MEDIUM."
             """,
-            "schema_links": "SECURITIES_LENDING.HOLDING_ID = REPURCHASE_COLLATERAL.HOLDING_ID, SECURITIES_LENDING.HOLDING_ID = FUND_REPORTED_INFO.HOLDING_ID, REPURCHASE_COLLATERAL.COLLATERAL_AMOUNT, SECURITIES_LENDING.IS_CASH_COLLATERAL, FUND_REPORTED_INFO.SERIES_NAME, REPURCHASE_COLLATERAL.YEAR, REPURCHASE_COLLATERAL.QUARTER"
-        },
-        {
-            "question": "Compare unrealized appreciation for PIMCO and Vanguard funds in Q3 2023.",
-            "query": """
-            SELECT fri.SERIES_NAME, SUM(fri.NET_UNREALIZE_AP_NONDERIV_MON1 + fri.NET_UNREALIZE_AP_NONDERIV_MON2 + fri.NET_UNREALIZE_AP_NONDERIV_MON3) AS TotalAppreciation
-            FROM FUND_REPORTED_INFO fri
-            JOIN FUT_FWD_NONFOREIGNCUR_CONTRACT ffnc ON fri.HOLDING_ID = ffnc.HOLDING_ID
-            WHERE fri.SERIES_NAME IN ('PIMCO', 'Vanguard') AND fri.YEAR = 2023 AND fri.QUARTER = 3
-            GROUP BY fri.SERIES_NAME;
-            """,
-            "reasoning": """
-            Let's think step by step. The SQL query for the question "Compare unrealized appreciation for PIMCO and Vanguard funds in Q3 2023" needs these tables = [FUND_REPORTED_INFO, FUT_FWD_NONFOREIGNCUR_CONTRACT], so we need JOIN.
-            Plus, it doesn't require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
-            So, we need JOIN and don't need nested queries, then the SQL query can be classified as "MEDIUM".
-            """,
-            "schema_links": "FUT_FWD_NONFOREIGNCUR_CONTRACT.HOLDING_ID = FUND_REPORTED_INFO.HOLDING_ID, FUND_REPORTED_INFO.SERIES_NAME, FUND_REPORTED_INFO.NET_UNREALIZE_AP_NONDERIV_MON1, FUND_REPORTED_INFO.NET_UNREALIZE_AP_NONDERIV_MON2, FUND_REPORTED_INFO.NET_UNREALIZE_AP_NONDERIV_MON3, FUT_FWD_NONFOREIGNCUR_CONTRACT.HOLDING_ID, FUND_REPORTED_INFO.HOLDING_ID, FUND_REPORTED_INFO.YEAR, FUND_REPORTED_INFO.QUARTER, PIMCO, Vanguard, 2023, 3"
-        }
-    ],
-    "hard": [
-        {
-            "question": "Find the top 3 issuers with the highest notional amounts in derivative contracts for Q3 2023.",
-            "query": """
-            SELECT ISSUER_NAME, TotalNotional
-            FROM (
-                SELECT ISSUER_NAME, SUM(NOTIONAL_AMOUNT) AS TotalNotional
-                FROM FUT_FWD_NONFOREIGNCUR_CONTRACT
-                WHERE YEAR = 2023 AND QUARTER = 3
-                GROUP BY ISSUER_NAME
-            ) AS IssuerNotional
-            ORDER BY TotalNotional DESC
-            FETCH FIRST 3 ROWS ONLY;
-            """,
-            "reasoning": """
-            Let's think step by step. The SQL query for the question "Find the top 3 issuers with the highest notional amounts in derivative contracts for Q3 2023" needs these tables = [FUT_FWD_NONFOREIGNCUR_CONTRACT].
-            Plus, it requires nested queries to answer the questions = ["What is the total notional amount for each issuer in Q3 2023?"].
-            So, we don't need JOINs but do need nested queries, then the SQL query can be classified as "HARD".
-            """,
-            "schema_links": "FUT_FWD_NONFOREIGNCUR_CONTRACT.ISSUER_NAME, FUT_FWD_NONFOREIGNCUR_CONTRACT.NOTIONAL_AMOUNT, FUT_FWD_NONFOREIGNCUR_CONTRACT.YEAR, FUT_FWD_NONFOREIGNCUR_CONTRACT.QUARTER"
+            "schema_links": "FUND_REPORTED_HOLDING.CURRENCY_CODE, FUND_REPORTED_HOLDING.CURRENCY_VALUE, FUND_REPORTED_HOLDING.IS_RESTRICTED_SECURITY, FUND_REPORTED_INFO.TOTAL_ASSETS, FUND_REPORTED_INFO.YEAR, FUND_REPORTED_INFO.QUARTER, FUND_REPORTED_HOLDING.ACCESSION_NUMBER = FUND_REPORTED_INFO.ACCESSION_NUMBER, Y, 2023, 1"
         }
     ]
 }
@@ -252,7 +215,6 @@ def execute_sql_query(query, db_path):
         - Examine the following examples as a reference to guide your corrected response:
             - Easy Questions: {[example for example in example_prompts_and_queries['easy']]}
             - Medium Questions: {[example for example in example_prompts_and_queries['medium']]}
-            - Hard Questions: {[example for example in example_prompts_and_queries['hard']]}
         3. Analyze Query Requirements:
         - Original Question: Consider what information the query is supposed to retrieve.
         - Executed SQL Query: Review the SQL query that was previously executed and led to an error or incorrect result.
@@ -344,7 +306,6 @@ if prompt := st.chat_input("Enter your question about the database:"):
     - Examine the following examples as a reference to guide your response:
         - Easy Questions: {[example for example in example_prompts_and_queries['easy']]}
         - Medium Questions: {[example for example in example_prompts_and_queries['medium']]}
-        - Hard Questions: {[example for example in example_prompts_and_queries['hard']]}
     3. Analyze User Question
     - Carefully identify what the user wants to know
     - Understand the intent behind the question 
