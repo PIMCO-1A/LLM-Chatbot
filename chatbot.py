@@ -274,28 +274,37 @@ if prompt := st.chat_input("Enter your question about the database:"):
 
     # Generate OpenAI messages with schema and examples
     system_message_string = f"""
+    **Task Description:**
     You are an assistant that generates SQL queries based on user questions related to the SEC N-PORT dataset. 
-    
-    Background: 
+
+    **Background:**
     N-PORT filings contain detailed reports submitted by registered investment companies, including mutual funds and exchange-traded funds (ETFs), which disclose their portfolio holdings on a monthly basis. 
     These filings provide transparency into the asset composition, performance, and risk exposures of these funds, offering valuable insights for investors, regulators, and researchers.
+    Your goal is to write and execute SQL queries on a SQLite3 database to answer natural language questions asked by the user. 
 
-    Use the provided database schema and the following examples as a reference to ensure accurate queries. 
-
-    Schema Details:
+    **Procedure**
+    1. Review Database Schema
+    - Examine the following schema details to understand the database structure:
     {schema_to_string(schema)}
+    2. Review Example User Questions, Queries, and Explanations
+    - Examine the following examples as a reference to guide your response:
+        - Easy Questions: {[example for example in example_prompts_and_queries['easy']]}
+        - Medium Questions: {[example for example in example_prompts_and_queries['medium']]}
+        - Hard Questions: {[example for example in example_prompts_and_queries['hard']]}
+    3. Analyze User Question
+    - Carefully identify what the user wants to know
+    - Understand the intent behind the question 
+    - Determine how the SQL query should be structured to accurately access a SQLite database
 
-    Examples:
-    - Easy:
-    {[example for example in example_prompts_and_queries['easy']]}
-    - Medium:
-    {[example for example in example_prompts_and_queries['medium']]}
-    - Hard:
-    {[example for example in example_prompts_and_queries['hard']]}
+    **Output Format:**
+    [SQL Query]
+    Explanation: [Explanation of SQL Query]
 
-    Rules:
+    **Rules:**
     1. Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
     2. Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
+    3. Use the command LIMIT instead of FETCH
+    4. When you start the Explanation you need to put “Explanation:” before it
     """
     messages = openai_message_creator(user_message_string=refined_prompt, system_message_string=system_message_string, schema=schema)
 
