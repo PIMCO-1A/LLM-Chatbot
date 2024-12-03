@@ -5,6 +5,9 @@ from openai import OpenAI
 from sqlalchemy import create_engine
 from pathlib import Path
 from schema_loader import load_schema
+import json
+from pydantic import BaseModel
+from typing import List
 
 # Load environment variables
 load_dotenv()
@@ -14,6 +17,9 @@ client = OpenAI(api_key=API_KEY)
 # Load the schema
 schema_file_path = "data/data_schema2.txt"
 schema = load_schema(schema_file_path)
+
+class APIResponse(BaseModel):
+    content: str
 
 def schema_to_string(schema):
     """

@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from pathlib import Path
 from api_connection import openai_message_creator, query_openai, schema_to_string, process_prompt_for_quarter_year
 from schema_loader import load_schema
+from pydantic import BaseModel, Field
+from typing import List, Union
 
 # load env variables
 load_dotenv()
@@ -295,12 +297,36 @@ example_prompts_and_queries = {
     ]
 }
 
-
 # initialize chat history and persistent query log
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "persistent_query_log" not in st.session_state:
     st.session_state.persistent_query_log = []
+
+
+# Methodology: Chain of Thought Reasoning Schema with Pydantic
+class Background(BaseModel):
+    """A setup to the background for the user."""
+    background: str = Field(description="Background for the user's question", min_length=10)
+
+class Thought(BaseModel):
+    """A thought about the user's question."""
+    thought: str = Field(description="Text of the thought.")
+    helpful: bool = Field(description="Whether the thought is helpful to solving the user's question.")
+
+class Observation(BaseModel):
+    """An observation on the sequence of thoughts and observations generated so far."""
+    observation: str = Field(description="An insightful observation on the sequence of thoughts and observations generated so far.")
+    
+class Reasonings(BaseModel):
+    """Returns a detailed reasoning to the user's question."""
+    reasonings: List[Union[Background, Thought, Observation]] = Field(description="Reasonings to solve the users questions.")
+
+class FinalQueryOutput(BaseModel):
+    user_nlp_query: str = Field(description="Returns the exact question that the user asked in natural language.")
+    reasonings: List[Union[Background, Thought, Observation]] = Field(description="Reasonings to solve the users questions.")
+    generated_sql_query: str = Field(description="Returns the SQL Language Query corresponding to the NLP description of the user question.")
+
 
 # function to execute SQL query w debugging
 def execute_sql_query(query, db_path):
@@ -312,7 +338,7 @@ def execute_sql_query(query, db_path):
     try:
         # Connect to the SQLite database
         conn = sqlite3.connect(db_path)
-        
+
         # Debugging: Print the SQL query
         print(f"Executing Query:\n{query}")
         
@@ -365,7 +391,8 @@ def execute_sql_query(query, db_path):
         # Query OpenAI to fix the query
         fixing_response = query_openai(openai_message_creator(
             user_message_string=query_fixing_prompt,
-            system_message_string="You are an expert SQL assistant. Review the SQL query for errors and provide corrections with explanations."
+            system_message_string="You are an expert SQL assistant. Review the SQL query for errors and provide corrections with explanations.",
+            schema
         ))
         
         if fixing_response:
@@ -418,12 +445,12 @@ if prompt := st.chat_input("Enter your question about the database:"):
     # Generate OpenAI messages with schema and examples
     system_message_string = f"""
     **Task Description:**
-    You are an assistant that generates SQL queries based on user questions related to the SEC N-PORT dataset. 
+    You are an assistant that generates SQL queries and their explanations based on user questions related to the SEC N-PORT dataset. 
 
     **Background:**
     N-PORT filings contain detailed reports submitted by registered investment companies, including mutual funds and exchange-traded funds (ETFs), which disclose their portfolio holdings on a monthly basis. 
     These filings provide transparency into the asset composition, performance, and risk exposures of these funds, offering valuable insights for investors, regulators, and researchers.
-    Your goal is to write and execute SQL queries on a SQLite database to answer natural language questions asked by the user. 
+    Your goal is to write, explain, and execute SQL queries on a SQLite database to answer natural language questions asked by the user. 
 
     **Procedure**
     1. Review Database Schema
@@ -433,11 +460,17 @@ if prompt := st.chat_input("Enter your question about the database:"):
     - Examine the following examples as a reference to guide your response:
         - Easy Questions: {[example for example in example_prompts_and_queries['easy']]}
         - Medium Questions: {[example for example in example_prompts_and_queries['medium']]}
-    3. Analyze User Question
-    - Carefully identify what the user wants to know
-    - Understand the intent behind the question 
-    - Determine how the SQL query should be structured to accurately access a SQLite database
-
+    3. Chain of Thought Reasoning:
+    - For each question, break down the reasoning steps to explain why the SQL query works. Each reasoning should progressively increase in complexity.
+    - Explain why nested queries or JOINs are or are not required.
+    - If any aggregation or grouping is required, explain why.
+    - Provide insights into how the structure of the SQL query answers the user's question.
+    4. Stucture Reasoning:
+    - The explanation of the SQL query should be structured as follows:
+        - Background: (Setup the background for the question)
+        - Thoughts: (Explain thoughts progressively and logically)
+        - Observation: (Final observation or conclusion)
+    
     **Output Format:**
     [SQL Query]
     Explanation: [Explanation of SQL Query]
@@ -446,7 +479,7 @@ if prompt := st.chat_input("Enter your question about the database:"):
     1. Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
     2. Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
     3. All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
-    4. When you start the Explanation you need to put “Explanation:” before it
+    4. When you start the Explanation you must put “Explanation:” before it
     """
     messages = openai_message_creator(user_message_string=refined_prompt, system_message_string=system_message_string, schema=schema)
 
