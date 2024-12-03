@@ -392,7 +392,8 @@ def execute_sql_query(query, db_path):
             - Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
             - Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
             - All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
-            - When you start the Explanation you need to put “Explanation:” before it
+            - When you start the Explanation you must put “Explanation:” before it
+            - Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
         5. Correct the Query:
         - Modify the SQL query to address the identified issues, ensuring it correctly fetches the requested data according to the database schema and query requirements.
 
@@ -495,6 +496,7 @@ if prompt := st.chat_input("Enter your question about the database:"):
     2. Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
     3. All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
     4. When you start the Explanation you must put “Explanation:” before it
+    5. Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
     """
     messages = openai_message_creator(user_message_string=refined_prompt, system_message_string=system_message_string, schema=schema)
 
