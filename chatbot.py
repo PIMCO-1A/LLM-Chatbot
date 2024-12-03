@@ -152,6 +152,21 @@ example_prompts_and_queries = {
             "schema_links": "FUND_REPORTED_INFO.ACCESSION_NUMBER = FUND_REPORTED_HOLDING.ACCESSION_NUMBER, FUND_REPORTED_HOLDING.HOLDING_ID = DESC_REF_INDEX_COMPONENT.HOLDING_ID, FUND_REPORTED_INFO.SERIES_NAME, DESC_REF_INDEX_COMPONENT.NOTIONAL_AMOUNT, FUND_REPORTED_INFO.TOTAL_ASSETS, FUND_REPORTED_INFO.QUARTER, FUND_REPORTED_INFO.YEAR, 1, 2020"
         },
         {
+            "question": "What is the cash collateral value for holdings involved in securities lending in Q1 2020?",
+            "query": """
+            SELECT rc.HOLDING_ID, rc.COLLATERAL_AMOUNT
+            FROM SECURITIES_LENDING sl
+            JOIN REPURCHASE_COLLATERAL rc ON sl.HOLDING_ID = rc.HOLDING_ID
+            WHERE sl.IS_CASH_COLLATERAL = 'Y' AND sl.YEAR = 2020 AND sl.QUARTER = 1;
+            """,
+            "reasoning": """
+            Let's think step by step. The SQL query for the question "What is the cash collateral value for holdings involved in securities lending in Q1 2020?" needs these tables = [SECURITIES_LENDING, REPURCHASE_COLLATERAL], so we need JOIN on HOLDING_ID.
+            Plus, it doesn't require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
+            So, we need JOIN and don't need nested queries, then the SQL query can be classified as "MEDIUM".
+            """,
+            "schema_links": "SECURITIES_LENDING.HOLDING_ID = REPURCHASE_COLLATERAL.HOLDING_ID, SECURITIES_LENDING.IS_CASH_COLLATERAL, REPURCHASE_COLLATERAL.COLLATERAL_AMOUNT, SECURITIES_LENDING.YEAR, SECURITIES_LENDING.QUARTER, Y, 2020, 1"
+        }
+        {
             "question": "Compare unrealized appreciation for PIMCO and Vanguard funds in Q3 2023.",
             "query": """
             SELECT fri.SERIES_NAME, SUM(fri.NET_UNREALIZE_AP_NONDERIV_MON1 + fri.NET_UNREALIZE_AP_NONDERIV_MON2 + fri.NET_UNREALIZE_AP_NONDERIV_MON3) AS TotalAppreciation
