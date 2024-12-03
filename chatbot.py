@@ -371,6 +371,92 @@ example_prompts_and_queries = {
             So, we don't need JOINs but need nested queries, then the SQL query can be classified as "HARD". 
             """,
             "schema_links": "FUND_REPORTED_INFO.SERIES_NAME, FUND_REPORTED_INFO.TOTAL_LIABILITIES, FUND_REPORTED_INFO.QUARTER, FUND_REPORTED_INFO.NET_REALIZE_GAIN_NONDERIV_MON1, FUND_REPORTED_INFO.NET_REALIZE_GAIN_NONDERIV_MON2, FUND_REPORTED_INFO.NET_REALIZE_GAIN_NONDERIV_MON3, FUND_REPORTED_INFO.YEAR, 2023"
+        },
+        {
+            "question": "Which funds hold restricted securities and have total assets greater than the average total assets of all funds in Q4 2023?",
+            "query": """
+            SELECT DISTINCT fri.SERIES_NAME, fri.TOTAL_ASSETS
+            FROM FUND_REPORTED_INFO fri
+            JOIN FUND_REPORTED_HOLDING frh ON fri.ACCESSION_NUMBER = frh.ACCESSION_NUMBER
+            WHERE frh.IS_RESTRICTED_SECURITY = 'Y'
+                AND fri.TOTAL_ASSETS > (
+                    SELECT AVG(TOTAL_ASSETS)
+                    FROM FUND_REPORTED_INFO
+                    WHERE YEAR = 2023 AND QUARTER = 4
+                )
+                AND fri.YEAR = 2023 AND fri.QUARTER = 4;
+            """,
+            "reasoning": """
+            Let's think step by step. The SQL query for the question "Which funds hold restricted securities and have total assets greater than the average total assets of all funds in Q4 2023?" needs these tables = [FUND_REPORTED_INFO, FUND_REPORTED_HOLDING], so we need JOIN.
+            Plus, it requires nested queries with AVG, and we need the answer to the questions = ["What is the average total assets of all funds in Q4 2023?"].
+            So, we need JOIN and need nested queries, then the SQL query can be classified as "HARD".
+            """,
+            "schema_links": "FUND_REPORTED_INFO.ACCESSION_NUMBER = FUND_REPORTED_HOLDING.ACCESSION_NUMBER, FUND_REPORTED_INFO.SERIES_NAME, FUND_REPORTED_INFO.TOTAL_ASSETS, FUND_REPORTED_HOLDING.IS_RESTRICTED_SECURITY, FUND_REPORTED_INFO.YEAR, FUND_REPORTED_INFO.QUARTER, Y, 2023, 4"
+        },
+        {
+            "question": "Find the quarterly change in net assets for funds with the largest liabilities-to-assets ratio in 2023.",
+            "query": """
+            SELECT SERIES_NAME, QUARTER,
+                NET_ASSETS - LAG(NET_ASSETS) OVER (PARTITION BY SERIES_NAME ORDER BY QUARTER) AS NetAssetChange
+            FROM FUND_REPORTED_INFO
+            WHERE SERIES_NAME IN (
+                SELECT SERIES_NAME
+                FROM (
+                    SELECT SERIES_NAME, (TOTAL_LIABILITIES / TOTAL_ASSETS) AS LiabilityToAssetRatio
+                    FROM FUND_REPORTED_INFO
+                    WHERE YEAR = 2023
+                    ORDER BY LiabilityToAssetRatio DESC
+                    LIMIT 5
+                ) AS TopRatioFunds
+            )
+            ORDER BY QUARTER;
+            """,
+            "reasoning": """
+            Let's think step by step. The SQL query for the question "Find the quarterly change in net assets for funds with the largest liabilities-to-assets ratio in 2023?" needs these tables = [FUND_REPORTED_INFO], so we need JOIN.
+            Plus, it requires nested queries with (ORDER BY, LIMIT), and we need the answer to the questions = [“What are the top 5 funds by liabilities-to-assets ratio in 2023?”].
+            So, we need JOIN and need nested queries, then the SQL query can be classified as "HARD".
+            """,
+            "schema_links": "FUND_REPORTED_INFO.SERIES_NAME, FUND_REPORTED_INFO.NET_ASSETS, FUND_REPORTED_INFO.QUARTER, FUND_REPORTED_INFO.YEAR, FUND_REPORTED_INFO.TOTAL_LIABILITIES, FUND_REPORTED_INFO.TOTAL_ASSETS, 2023"
+        },
+        {
+            "question": "List the funds with cash holdings greater than the average cash holdings in Q2 2023.",
+            "query": """
+            SELECT SERIES_NAME
+            FROM FUND_REPORTED_INFO
+            WHERE CASH_NOT_RPTD_IN_C_OR_D > (
+                SELECT AVG(CASH_NOT_RPTD_IN_C_OR_D)
+                FROM FUND_REPORTED_INFO
+                WHERE YEAR = 2023 AND QUARTER = 2
+            )
+            AND YEAR = 2023 AND QUARTER = 2;
+            """,
+            "reasoning": """
+            Let's think step by step. The SQL query for the question "List the funds with cash holdings greater than the average cash holdings in Q2 2023" needs this table = [FUND_REPORTED_INFO], so we don't need JOINs.
+            Plus, it requires a nested query with AVG, and we need the answer to the question = ["What is the average cash holdings for all funds in Q2 2023?"].
+            So, we don't need JOINs but need a nested query, then the SQL query can be classified as "HARD."
+            """,
+            "schema_links": "FUND_REPORTED_INFO.CASH_NOT_RPTD_IN_C_OR_D, FUND_REPORTED_INFO.SERIES_NAME, FUND_REPORTED_INFO.YEAR, FUND_REPORTED_INFO.QUARTER, 2023, 2"
+        },
+        {
+            "question": "Which funds have derivatives with a counterparty LEI matching a repurchase counterparty's LEI, and the total unrealized appreciation for those derivatives exceeds $1 million in Q2 2024?",
+            "query": """
+            SELECT fri.SERIES_NAME, SUM(swd.UNREALIZED_APPRECIATION) AS TotalAppreciation, swd.YEAR, swd.QUARTER
+            FROM FUND_REPORTED_INFO fri
+            JOIN FUND_REPORTED_HOLDING frh ON fri.ACCESSION_NUMBER = frh.ACCESSION_NUMBER
+            JOIN SWAPTION_OPTION_WARNT_DERIV swd ON frh.HOLDING_ID = swd.HOLDING_ID
+            JOIN (
+                SELECT rc.LEI
+                FROM REPURCHASE_COUNTERPARTY rc
+            ) rep ON swd.HOLDING_ID = frh.HOLDING_ID
+            WHERE swd.UNREALIZED_APPRECIATION > 1000000 AND swd.YEAR = 2024 AND swd.QUARTER = 2
+            GROUP BY fri.SERIES_NAME;
+            """,
+            "reasoning": """
+            Let's think step by step. The SQL query for the question "Which funds have derivatives with a counterparty LEI matching a repurchase counterparty's LEI, and the total unrealized appreciation for those derivatives exceeds $1 million in Q2 2024?" needs these tables = [FUND_REPORTED_INFO, FUND_REPORTED_HOLDING, SWAPTION_OPTION_WARNT_DERIV, REPURCHASE_COUNTERPARTY], so we need JOIN.
+            Plus, it requires nested queries with (IN, JOIN), and we need the answer to the questions = [“What are the LEIs of repurchase counterparties?”].
+            So, we need JOIN and nested queries, then the SQL query can be classified as "HARD".
+            """,
+            "schema_links": "FUND_REPORTED_INFO.ACCESSION_NUMBER = FUND_REPORTED_HOLDING.ACCESSION_NUMBER, FUND_REPORTED_HOLDING.HOLDING_ID = SWAPTION_OPTION_WARNT_DERIV.HOLDING_ID, SWAPTION_OPTION_WARNT_DERIV.UNREALIZED_APPRECIATION, REPURCHASE_COUNTERPARTY.LEI, SWAPTION_OPTION_WARNT_DERIV.YEAR, SWAPTION_OPTION_WARNT_DERIV.QUARTER, 1000000, 2024, 2"
         }
     ]
 }
