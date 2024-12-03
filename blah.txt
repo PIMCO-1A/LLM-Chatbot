@@ -45,30 +45,6 @@ if "persistent_query_log" not in st.session_state:
     st.session_state.persistent_query_log = []
 
 
-# Methodology: Chain of Thought Reasoning Schema with Pydantic
-class Background(BaseModel):
-    """A setup to the background for the user."""
-    background: str = Field(description="Background for the user's question", min_length=10)
-
-class Thought(BaseModel):
-    """A thought about the user's question."""
-    thought: str = Field(description="Text of the thought.")
-    helpful: bool = Field(description="Whether the thought is helpful to solving the user's question.")
-
-class Observation(BaseModel):
-    """An observation on the sequence of thoughts and observations generated so far."""
-    observation: str = Field(description="An insightful observation on the sequence of thoughts and observations generated so far.")
-    
-class Reasonings(BaseModel):
-    """Returns a detailed reasoning to the user's question."""
-    reasonings: List[Union[Background, Thought, Observation]] = Field(description="Reasonings to solve the users questions.")
-
-class FinalQueryOutput(BaseModel):
-    user_nlp_query: str = Field(description="Returns the exact question that the user asked in natural language.")
-    reasonings: List[Union[Background, Thought, Observation]] = Field(description="Reasonings to solve the users questions.")
-    generated_sql_query: str = Field(description="Returns the SQL Language Query corresponding to the NLP description of the user question.")
-
-
 # function to execute SQL query w debugging
 def execute_sql_query(query, db_path):
     """
@@ -290,3 +266,34 @@ if prompt := st.chat_input("Enter your question about the database:"):
 #             """,
 #             "schema_links": " "
 #         }
+
+
+# initialize chat history and persistent query log
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "persistent_query_log" not in st.session_state:
+    st.session_state.persistent_query_log = []
+
+
+# Methodology: Chain of Thought Reasoning Schema with Pydantic
+class Background(BaseModel):
+    """A setup to the background for the user."""
+    background: str = Field(description="Background for the user's question", min_length=10)
+
+class Thought(BaseModel):
+    """A thought about the user's question."""
+    thought: str = Field(description="Text of the thought.")
+    helpful: bool = Field(description="Whether the thought is helpful to solving the user's question.")
+
+class Observation(BaseModel):
+    """An observation on the sequence of thoughts and observations generated so far."""
+    observation: str = Field(description="An insightful observation on the sequence of thoughts and observations generated so far.")
+    
+class Reasonings(BaseModel):
+    """Returns a detailed reasoning to the user's question."""
+    reasonings: List[Union[Background, Thought, Observation]] = Field(description="Reasonings to solve the users questions.")
+
+class FinalQueryOutput(BaseModel):
+    user_nlp_query: str = Field(description="Returns the exact question that the user asked in natural language.")
+    reasonings: List[Union[Background, Thought, Observation]] = Field(description="Reasonings to solve the users questions.")
+    generated_sql_query: str = Field(description="Returns the SQL Language Query corresponding to the NLP description of the user question.")
