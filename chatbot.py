@@ -9,7 +9,69 @@ from pathlib import Path
 from api_connection import openai_message_creator, query_openai, schema_to_string, process_prompt_for_quarter_year
 from schema_loader import load_schema
 from pydantic import BaseModel, Field
-from typing import List, Union
+from typing import List, Union, Optional, Tuple
+
+
+class Background(BaseModel):
+    """A setup to the background for the user."""
+    background: str = Field(description="Background for the user's question", min_length=10)
+
+
+class Thought(BaseModel):
+    """A thought about the user's question."""
+    thought: str  = Field(description="Text of the thought.")
+    helpful: bool = Field(description="Whether the thought is helpful to solving the user's question.")
+
+
+class Observation(BaseModel):
+    """An observation on the sequence of thoughts and observations generated so far."""
+    observation: str = Field(description="An insightful observation on the sequence of thoughts and observations generated so far.")
+    
+
+class Reasonings(BaseModel):
+    """Returns a detailed reasoning to the user's question."""
+    reasonings: list[Union[Background, Thought, Observation]] = Field(
+        description="Reasonings to solve the users questions."
+        #, min_length=5
+    )
+
+sample_reasonings=Reasonings(reasonings=[Background(background="The task is to generate SQL from natural language query."),
+                                             Thought(thought="First thought", helpful="True"),
+                                             Thought(thought="Second thought", helpful="True"),
+                                             Thought(thought="Third thought", helpful="True"),
+                                             Thought(thought="Fourth thought", helpful="True"),
+                                             Thought(thought="Fifth thought", helpful="True"),
+                                             Observation(observation="Astute observation")])
+
+sample_reasonings.json()
+reasonings_schema_json = Reasonings.schema_json()
+
+class FinalQueryOutput(BaseModel):
+    user_nlp_query: str = Field(
+        description=f"""Returns the exact question that the user asked in natural language
+        which is to be translated into SQL Query.""")
+    reasonings: list[Union[Background, Thought, Observation]] = Field(
+        description="Reasonings to solve the users questions."
+        #, min_length=5
+    )
+    generated_sql_query: str = Field(
+        description=f"""Returns the SQL Language Query corresponding to the
+        NLP description of the user question.""")
+
+final_output_schema_json = FinalQueryOutput.schema_json()
+
+
+sample_output = FinalQueryOutput(user_nlp_query="Get count of rows.", 
+                                 reasonings=[Background(background="Deadline is near"),
+                                             Thought(thought="First thought", helpful="True"),
+                                             Thought(thought="Second thought", helpful="True"),
+                                             Thought(thought="Third thought", helpful="True"),
+                                             Thought(thought="Fourth thought", helpful="True"),
+                                             Thought(thought="Fifth thought", helpful="True"),
+                                             Observation(observation="Astute observation")], 
+                                 generated_sql_query="Select count * from fact_table")
+sample_output.json()
+
 
 # load env variables
 load_dotenv()
@@ -437,8 +499,6 @@ if prompt := st.chat_input("Enter your question about the database:"):
     system_message_string = f"""
     **Task Description:**
     You are an assistant that generates SQL queries and their explanations based on user questions related to the SEC N-PORT dataset. 
-
-    **Background:**
     N-PORT filings contain detailed reports submitted by registered investment companies, including mutual funds and exchange-traded funds (ETFs), which disclose their portfolio holdings on a monthly basis. 
     These filings provide transparency into the asset composition, performance, and risk exposures of these funds, offering valuable insights for investors, regulators, and researchers.
     Your goal is to write, explain, and execute SQL queries on a SQLite database to answer natural language questions asked by the user. 
@@ -454,86 +514,95 @@ if prompt := st.chat_input("Enter your question about the database:"):
         - Medium Questions: {[example for example in example_prompts_and_queries['medium']]}
         - Hard Questions: {[example for example in example_prompts_and_queries['hard']]}
 
-    3. Chain of Thought Reasoning:
-    - **Step 1**: Understand the user query. Break down the user's question to identify key requirements (e.g., filters, aggregation, grouping).
-    - **Step 2**: Identify the necessary tables, columns, and relationships to answer the question.
-    - **Step 3**: If needed, explain why any additional SQL operations (such as JOINs, subqueries, or aggregates) are required to answer the question.
-    - **Step 4**: Provide a final, executable SQL query.
-    - **Step 5**: **Explanation**: Offer a step-by-step explanation of the SQL query, explaining the reasoning behind each part of the query.
-        - Think of the explanation as the model describing the steps it took to create the query.
-   
-    **Output Format:**
-    [SQL Query]
-    Explanation: [Explanation of SQL Query]
-
+    3. Reasoning Instructions:
+    - Provide a detailed, structured reasoning to justify the SQL query. This should include:
+        1. **Background**: Describe any initial context or assumptions used to understand the problem.
+        2. **Thought Process**: Break down the problem progressively:
+            - Consider whether Common Table Expressions (CTEs) or subqueries are needed.
+            - Identify which columns are relevant for the `select`, `where`, `group_by`, etc.
+            - Determine potential values for `where` clauses, such as ISSUER_NAME, and map those to database columns.
+            - Assess whether filters or aggregations are necessary.
+            - Identify the time period and grouping conditions.
+        3. **Observations**: Reflect on the reasoning steps, offer insights, and describe how the steps lead to the final query.
+    - Think of this reasoning as the model describing the steps it took to create the query.
+        1. Reasoning you provide should first focus on why a nested query was chosen or why it wasn't chosen.
+        2. It should give a query plan on how to solve this question - explain the mapping of the columns to the words in the input question.
+        3. It should explain each of the clauses and why they are structured the way they are structured. For example, if there is a `group_by`, an explanation should be given as to why it exists.
+        4. If there's any sum() or any other function used it should be explained as to why it was required.
+    
     **Rules:**
     1. Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
     2. Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
     3. All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
-    4. When you start the Explanation you must put “Explanation:” before it
+    4. When you start the Reasoning you must put “Reasoning:” before it
     5. Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
+
+    **Schema for Output:**
+    - This includes the reasonings schema above as an element
+    - The final response should be a json with `names` as `generated_sql_query` and `reasoning`:
+        1. `generated_sql_query` should provide the SQL query generated in string format.
+        2. `reasonings` should provide the reasoning steps adhering to the reasoning instructions.
+    - This is the final answer.
     """
     messages = openai_message_creator(user_message_string=refined_prompt, system_message_string=system_message_string, schema=schema)
 
     response = query_openai(messages)
 
     if response:
-        # Clean the response to extract the SQL query and explanation
-        if "Explanation:" in response:
-            sql_query, explanation = response.split("Explanation:", 1)
-            sql_query = sql_query.split("SQL Query:")[-1].strip()  # Extract only the query text
-            explanation = explanation.strip()
-        else:
-            sql_query = response.splitlines()[0].strip()
-            explanation = "No explanation provided."
-
-        # Clean the query before executing it
-        cleaned_sql_query = sql_query.replace("```sql", "").replace("```", "").strip()
-        print(f"Cleaned SQL Query:\n{cleaned_sql_query}")
-
-        # Validate the cleaned query
-        if validate_sql_query(cleaned_sql_query):
-            # Execute the cleaned query
-            df_result = execute_sql_query(cleaned_sql_query, db_path)
+        # Assuming response is a well-formed JSON string from OpenAI, parse it
+        try:
+            response_json = json.loads(response)
+            # Extract the generated SQL query and explanation
+            generated_sql_query = response_json.get('generated_sql_query', '').strip()
+            explanation = response_json.get('reasoning', {}).get('text', 'No explanation provided').strip()
             
-            if df_result is not None:
-                # Save query, explanation, and results to persistent query log
-                query_record = {
-                    "question": prompt,
-                    "query": cleaned_sql_query,
-                    "explanation": explanation,
-                    "results": df_result
-                }
-                st.session_state.persistent_query_log.append(query_record)
+            # Clean the SQL query before executing it
+            cleaned_sql_query = generated_sql_query.replace("```sql", "").replace("```", "").strip()
 
-                # Display SQL query, explanation, and results
-                st.write("#### Question")
-                st.markdown(query_record["question"])
-                st.write("#### SQL Query")
-                st.code(query_record["query"], language="sql")
-                st.write("#### Explanation")
-                st.markdown(query_record["explanation"])
-                st.write("#### Results")
-                st.dataframe(query_record["results"])
+            print(f"Cleaned SQL Query:\n{cleaned_sql_query}")
 
-                # Convert the DataFrame to CSV format
-                csv = df_result.to_csv(index=False)
+            # Validate the cleaned query
+            if validate_sql_query(cleaned_sql_query):
+                # Execute the cleaned query
+                df_result = execute_sql_query(cleaned_sql_query, db_path)
+                
+                if df_result is not None:
+                    # Save query, explanation, and results to persistent query log
+                    query_record = {
+                        "question": prompt,
+                        "query": cleaned_sql_query,
+                        "explanation": explanation,
+                        "results": df_result
+                    }
+                    st.session_state.persistent_query_log.append(query_record)
 
-                # Create a downloadable CSV file 
-                st.download_button(
-                    label="Download results as CSV",
-                    data=csv,
-                    file_name="query_results.csv",
-                    mime="text/csv"
-                )
+                    # Display SQL query, explanation, and results
+                    st.write("#### Question")
+                    st.markdown(query_record["question"])
+                    st.write("#### SQL Query")
+                    st.code(query_record["query"], language="sql")
+                    st.write("#### Explanation")
+                    st.markdown(query_record["explanation"])
+                    st.write("#### Results")
+                    st.dataframe(query_record["results"])
+
+                    # Convert the DataFrame to CSV format
+                    csv = df_result.to_csv(index=False)
+
+                    # Create a downloadable CSV file 
+                    st.download_button(
+                        label="Download results as CSV",
+                        data=csv,
+                        file_name="query_results.csv",
+                        mime="text/csv"
+                    )
+                else:
+                    st.error("Failed to execute the query. Check the logs for details.")
             else:
-                st.error("Failed to execute the query. Check the logs for details.")
-        else:
-            # If the query is invalid, show an error message
-            st.error("Invalid SQL query generated. Please review.")
-    else:
-        st.error("No response generated. Please try again.")
-
+                # If the query is invalid, show an error message
+                st.error("Invalid SQL query generated. Please review.")
+        except json.JSONDecodeError:
+            st.error("Error decoding response from OpenAI. Please try again.")
 
 
 

@@ -18,9 +18,6 @@ client = OpenAI(api_key=API_KEY)
 schema_file_path = "data/data_schema2.txt"
 schema = load_schema(schema_file_path)
 
-class APIResponse(BaseModel):
-    content: str
-
 def schema_to_string(schema):
     """
     Convert the schema dictionary to a human-readable string for use in prompts.
@@ -92,7 +89,8 @@ def query_openai(messages, model="gpt-4-0125-preview"):
     try:
         response = client.chat.completions.create(
             model=model,
-            messages=messages
+            messages=messages,
+            response_format = {"type":"json_object"}
         )
         return response.choices[0].message.content
     except Exception as e:
