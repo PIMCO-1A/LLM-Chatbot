@@ -3,6 +3,7 @@ import sqlite3
 import pandas as pd
 import streamlit as st
 import openai
+import io
 from dotenv import load_dotenv
 from pathlib import Path
 from api_connection import openai_message_creator, query_openai, schema_to_string, process_prompt_for_quarter_year
@@ -165,7 +166,7 @@ example_prompts_and_queries = {
             So, we need JOIN and don't need nested queries, then the SQL query can be classified as "MEDIUM".
             """,
             "schema_links": "SECURITIES_LENDING.HOLDING_ID = REPURCHASE_COLLATERAL.HOLDING_ID, SECURITIES_LENDING.IS_CASH_COLLATERAL, REPURCHASE_COLLATERAL.COLLATERAL_AMOUNT, SECURITIES_LENDING.YEAR, SECURITIES_LENDING.QUARTER, Y, 2020, 1"
-        }
+        },
         {
             "question": "Compare unrealized appreciation for PIMCO and Vanguard funds in Q3 2023.",
             "query": """
@@ -407,8 +408,7 @@ def execute_sql_query(query, db_path):
         # Query OpenAI to fix the query
         fixing_response = query_openai(openai_message_creator(
             user_message_string=query_fixing_prompt,
-            system_message_string="You are an expert SQL assistant. Review the SQL query for errors and provide corrections with explanations.",
-            schema
+            system_message_string="You are an expert SQL assistant. Review the SQL query for errors and provide corrections with explanations."
         ))
         
         if fixing_response:
@@ -540,6 +540,17 @@ if prompt := st.chat_input("Enter your question about the database:"):
                 st.markdown(query_record["explanation"])
                 st.write("#### Results")
                 st.dataframe(query_record["results"])
+
+                # Convert the DataFrame to CSV format
+                csv = df_result.to_csv(index=False)
+
+                # Create a downloadable CSV file 
+                st.download_button(
+                    label="Download results as CSV",
+                    data=csv,
+                    file_name="query_results.csv",
+                    mime="text/csv"
+                )
             else:
                 st.error("Failed to execute the query. Check the logs for details.")
         else:
