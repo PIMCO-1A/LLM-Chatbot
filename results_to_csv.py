@@ -5,7 +5,11 @@ import pandas as pd
 db_path = 'data/sec_nport_data_combined.db'
 
 # SQL query: CHANGE THIS TO YOUR QUERY
-sql_query = 'SELECT * FROM your_table;'  
+sql_query = """
+SELECT ISSUER_NAME, ISSUER_LEI
+FROM FUND_REPORTED_HOLDING
+WHERE YEAR = 2022 AND QUARTER = 2;
+"""
 
 # Connect to the db
 conn = sqlite3.connect(db_path)
