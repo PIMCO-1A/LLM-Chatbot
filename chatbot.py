@@ -418,6 +418,12 @@ if "persistent_query_log" in st.session_state and st.session_state.persistent_qu
         st.write("#### Results")
         st.dataframe(query_record["results"])
 
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "persistent_query_log" not in st.session_state:
+    st.session_state.persistent_query_log = []
+
 # user input
 if prompt := st.chat_input("Enter your question about the database:"):
     # Add user message to chat history

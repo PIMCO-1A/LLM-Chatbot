@@ -3,6 +3,7 @@ import sqlite3
 import pandas as pd
 import streamlit as st
 import openai
+import io
 from dotenv import load_dotenv
 from pathlib import Path
 from api_connection import openai_message_creator, query_openai, schema_to_string, process_prompt_for_quarter_year
@@ -37,13 +38,6 @@ example_prompts_and_queries = {
         ...
     ]
 }
-
-# initialize chat history and persistent query log
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "persistent_query_log" not in st.session_state:
-    st.session_state.persistent_query_log = []
-
 
 # function to execute SQL query w debugging
 def execute_sql_query(query, db_path):
@@ -109,8 +103,7 @@ def execute_sql_query(query, db_path):
         # Query OpenAI to fix the query
         fixing_response = query_openai(openai_message_creator(
             user_message_string=query_fixing_prompt,
-            system_message_string="You are an expert SQL assistant. Review the SQL query for errors and provide corrections with explanations.",
-            schema
+            system_message_string="You are an expert SQL assistant. Review the SQL query for errors and provide corrections with explanations."
         ))
         
         if fixing_response:
@@ -174,21 +167,21 @@ if prompt := st.chat_input("Enter your question about the database:"):
     1. Review Database Schema
     - Examine the following schema details to understand the database structure:
     {schema_to_string(schema)}
+
     2. Review Example User Questions, Queries, and Explanations
     - Examine the following examples as a reference to guide your response:
         - Easy Questions: {[example for example in example_prompts_and_queries['easy']]}
         - Medium Questions: {[example for example in example_prompts_and_queries['medium']]}
+        - Hard Questions: {[example for example in example_prompts_and_queries['hard']]}
+
     3. Chain of Thought Reasoning:
-    - For each question, break down the reasoning steps to explain why the SQL query works. Each reasoning should progressively increase in complexity.
-    - Explain why nested queries or JOINs are or are not required.
-    - If any aggregation or grouping is required, explain why.
-    - Provide insights into how the structure of the SQL query answers the user's question.
-    4. Stucture Reasoning:
-    - The explanation of the SQL query should be structured as follows:
-        - Background: (Setup the background for the question)
-        - Thoughts: (Explain thoughts progressively and logically)
-        - Observation: (Final observation or conclusion)
-    
+    - **Step 1**: Understand the user query. Break down the user's question to identify key requirements (e.g., filters, aggregation, grouping).
+    - **Step 2**: Identify the necessary tables, columns, and relationships to answer the question.
+    - **Step 3**: If needed, explain why any additional SQL operations (such as JOINs, subqueries, or aggregates) are required to answer the question.
+    - **Step 4**: Provide a final, executable SQL query.
+    - **Step 5**: **Explanation**: Offer a step-by-step explanation of the SQL query, explaining the reasoning behind each part of the query.
+        - Think of the explanation as the model describing the steps it took to create the query.
+   
     **Output Format:**
     [SQL Query]
     Explanation: [Explanation of SQL Query]
@@ -242,6 +235,17 @@ if prompt := st.chat_input("Enter your question about the database:"):
                 st.markdown(query_record["explanation"])
                 st.write("#### Results")
                 st.dataframe(query_record["results"])
+
+                # Convert the DataFrame to CSV format
+                csv = df_result.to_csv(index=False)
+
+                # Create a downloadable CSV file 
+                st.download_button(
+                    label="Download results as CSV",
+                    data=csv,
+                    file_name="query_results.csv",
+                    mime="text/csv"
+                )
             else:
                 st.error("Failed to execute the query. Check the logs for details.")
         else:
@@ -251,49 +255,3 @@ if prompt := st.chat_input("Enter your question about the database:"):
         st.error("No response generated. Please try again.")
 
 
-
-
-
-
-
-# {
-#             "question": " ",
-#             "query": """
-            
-#             """,
-#             "reasoning": """
-            
-#             """,
-#             "schema_links": " "
-#         }
-
-
-# initialize chat history and persistent query log
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "persistent_query_log" not in st.session_state:
-    st.session_state.persistent_query_log = []
-
-
-# Methodology: Chain of Thought Reasoning Schema with Pydantic
-class Background(BaseModel):
-    """A setup to the background for the user."""
-    background: str = Field(description="Background for the user's question", min_length=10)
-
-class Thought(BaseModel):
-    """A thought about the user's question."""
-    thought: str = Field(description="Text of the thought.")
-    helpful: bool = Field(description="Whether the thought is helpful to solving the user's question.")
-
-class Observation(BaseModel):
-    """An observation on the sequence of thoughts and observations generated so far."""
-    observation: str = Field(description="An insightful observation on the sequence of thoughts and observations generated so far.")
-    
-class Reasonings(BaseModel):
-    """Returns a detailed reasoning to the user's question."""
-    reasonings: List[Union[Background, Thought, Observation]] = Field(description="Reasonings to solve the users questions.")
-
-class FinalQueryOutput(BaseModel):
-    user_nlp_query: str = Field(description="Returns the exact question that the user asked in natural language.")
-    reasonings: List[Union[Background, Thought, Observation]] = Field(description="Reasonings to solve the users questions.")
-    generated_sql_query: str = Field(description="Returns the SQL Language Query corresponding to the NLP description of the user question.")
