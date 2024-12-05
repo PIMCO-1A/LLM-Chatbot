@@ -638,95 +638,118 @@ The final response should be a json with `names` as `user_nlp_query`, `reasoning
 - this is the final answer.
 """
 
-def execute_sql_query(query: str, db_path: Path) -> Optional[pd.DataFrame]:
+def execute_sql_query(query: str, db_path: Path, input_question: str, max_attempts: int = 3) -> Optional[pd.DataFrame]:
     """
     Executes the provided SQL query against the SQLite database at db_path.
-    Logs the query being executed for debugging purposes. If there's an error,
-    it attempts to fix the query.
+    If there's an error, tries to fix the query using OpenAI up to `max_attempts` times.
+    After the third failed attempt, displays an error message and returns None.
     """
-    try:
-        # Connect to the SQLite database
-        conn = sqlite3.connect(db_path)
 
-        # Debugging: Print the SQL query
-        print(f"Executing Query:\n{query}")
-        
-        # Execute the query and fetch the result as a DataFrame
-        df_result = pd.read_sql_query(query, conn)
-        
-        # Close the connection
-        conn.close()
-        
-        return df_result
-    except Exception as e:
-        # Log the error
-        print(f"Error executing the SQL query: {e}")
-        # Generate the query-fixing prompt using the given details
-        query_fixing_prompt = textwrap.dedent(f"""
-        **Task Description:**
-        You are an SQL database expert tasked with correcting a SQL query. A previous attempt to run a query did not yield the correct results,
-        either due to errors in execution or because the result returned was empty or unexpected. Your role is to analyze the error based on 
-        the provided database schema and the details of the failed execution, and then provide a corrected version of the SQL query. 
+    attempt = 1
+    current_query = query
 
-        **Procedure:**
-        1. Review Database Schema
-        - Examine the following schema details to understand the database structure:
-        {schema}
-        - Examine the following key schema that identifies the primary keys for each table in the database:
-        {key_schema}
-        2. Review Example User Questions, Queries, and Reasonings
-        - Examine the following examples as a reference to guide your corrected response:
-            - Easy Questions: {[example for example in example_prompts_and_queries['easy']]}
-            - Medium Questions: {[example for example in example_prompts_and_queries['medium']]}
-            - Hard Questions: {[example for example in example_prompts_and_queries['hard']]}
-        3. Analyze Query Requirements:
-        - Original Question: Consider what information the query is supposed to retrieve.
-            - Here's the question that the user entered: {input_question}
-        - Executed SQL Query: Review the SQL query that was previously executed and led to an error or incorrect result.
-        - Execution Result: Analyze the outcome of the executed query to identify why it failed (e.g., syntax errors, incorrect column references, logical mistakes).
-        4. Review Reasoning Instructions:
-        {reasoning_instructions}
-        {reasoning_schema_instructions}
-        5. Adhere to Rules:
-        - Remember the rules you must follow:
+    while attempt <= max_attempts:
+        try:
+            # Connect to the SQLite database
+            conn = sqlite3.connect(db_path)
+
+            # Debugging: Print the SQL query
+            print(f"Attempt {attempt}: Executing Query:\n{current_query}")
+            
+            # Execute the query and fetch the result as a DataFrame
+            df_result = pd.read_sql_query(current_query, conn)
+            
+            # Close the connection
+            conn.close()
+
+            # If successful, return the DataFrame
+            return df_result
+
+        except Exception as e:
+            # Log the error
+            print(f"Error executing the SQL query on attempt {attempt}: {e}")
+
+            # If this was the last attempt, give up and return None
+            if attempt == max_attempts:
+                print("Max attempts reached. Could not fix the query.")
+                return None
+
+            # Otherwise, attempt to fix the query
+            query_fixing_prompt = textwrap.dedent(f"""
+            **Task Description:**
+            You are an SQL database expert tasked with correcting a SQL query. A previous attempt to run a query did not yield the correct results,
+            either due to errors in execution or because the result returned was empty or unexpected. Your role is to analyze the error based on 
+            the provided database schema and the details of the failed execution, and then provide a corrected version of the SQL query. 
+
+            **Procedure:**
+            1. Review Database Schema
+            - Examine the following schema details to understand the database structure:
+            {schema}
+            - Examine the following key schema that identifies the primary keys for each table in the database:
+            {key_schema}
+
+            2. Review Example User Questions, Queries, and Reasonings
+            - Examine the following examples as a reference to guide your corrected response:
+                - Easy Questions: {[example for example in example_prompts_and_queries['easy']]}
+                - Medium Questions: {[example for example in example_prompts_and_queries['medium']]}
+                - Hard Questions: {[example for example in example_prompts_and_queries['hard']]}
+
+            3. Analyze Query Requirements:
+            - Original Question: Consider what information the query is supposed to retrieve.
+              Here's the question that the user entered: {input_question}
+
+            - Executed SQL Query: Review the SQL query that was previously executed and led to an error:
+              {current_query}
+
+            - Execution Result: Analyze why it may have failed (e.g., syntax errors, incorrect column references, logical mistakes).
+
+            4. Review Reasoning Instructions:
+            {reasoning_instructions}
+            {reasoning_schema_instructions}
+
+            5. Adhere to Rules:
             - Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
             - Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
             - All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
             - Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
-            - Use the key schema to identify the primary keys for each table in the database. If you need to join two tables that do not have the same primary key, find an intermidiate table that has both primary keys.
-        6. Correct the Query and Corresponding Reasoning:
-        - Modify the SQL query to address the identified issues, ensuring it correctly fetches the requested data according to the database schema and query requirements.
+            - Use the key schema to identify the primary keys for each table in the database. If you need to join two tables that do not have the same primary key, find an intermediate table that has both primary keys.
 
-        **Schema for Output:**
-        - This can be found in the {reasoning_schema_instructions}
+            6. Correct the Query and Corresponding Reasoning:
+            - Modify the SQL query to address the identified issues, ensuring it correctly fetches the requested data according to the database schema and query requirements.
+            - Return the final JSON response as per the schema instructions provided earlier.
+            """)
 
-        Based on the question, table schema, and previous query, analyze the result to fix the query and make it valid and executable.
-        """)
+            fixing_response = query_openai(openai_message_creator(
+                user_message_string=query_fixing_prompt,
+                system_message_string="You are an expert SQL assistant. Review the SQL query for errors and provide corrections with reasoning."
+            ))
 
-        # Query OpenAI to fix the query
-        fixing_response = query_openai(openai_message_creator(
-            user_message_string=query_fixing_prompt,
-            system_message_string="You are an expert SQL assistant. Review the SQL query for errors and provide corrections with reasoning."
-        ))
-        
-        if fixing_response:
-            try: 
-                # Parse the response to extract the suggested corrected query and reasoning
-                response_json = json.loads(fixing_response)
-                fixed_sql_query = response_json.get('generated_sql_query', '').strip()
-                fixed_reasoning_list = response_json.get('reasonings', [])
-                fixed_reasoning = "\n\n".join(f"- **{type(r).__name__}**: {r}" for r in fixed_reasoning_list)
+            if fixing_response:
+                try: 
+                    # Parse the response to extract the suggested corrected query and reasoning
+                    response_json = json.loads(fixing_response)
+                    fixed_sql_query = response_json.get('generated_sql_query', '').strip()
 
-                # Retry executing the fixed query
-                df_fixed_result = execute_sql_query(fixed_sql_query, db_path)
-                if df_fixed_result is not None:
-                    return df_fixed_result
-                else:
-                    print("Failed to execute the fixed query.")
+                    if fixed_sql_query:
+                        # Update current_query with the fixed query and try again
+                        current_query = fixed_sql_query
+                    else:
+                        # If no fixed query was provided, we can't proceed
+                        print("No fixed SQL query returned by OpenAI.")
+                        return None
+
+                except json.JSONDecodeError:
+                    print("Error decoding response from OpenAI. Please try again.")
                     return None
-            except json.JSONDecodeError:
-                print("Error decoding response from OpenAI. Please try again.")
+            else:
+                print("No response from OpenAI when attempting to fix the query.")
                 return None
+
+        attempt += 1
+
+    # If we exit the loop without returning, no luck fixing or executing the query
+    print("Max attempts reached. Could not fix the query.")
+    return None
 
 def validate_sql_query(query: str) -> bool:
     """
@@ -743,33 +766,3 @@ def validate_sql_query(query: str) -> bool:
 
 
 
-# 3. Reasoning Instructions:
-#     - Provide a detailed, structured reasoning to justify the SQL query. This should include:
-#         1. **Background**: Describe any initial context or assumptions used to understand the problem.
-#         2. **Thought Process**: Break down the problem progressively:
-#             - Consider whether Common Table Expressions (CTEs) or subqueries are needed.
-#             - Identify which columns are relevant for the `SELECT`, `WHERE`, `GROUP BY`, etc.
-#             - Determine potential values for `WHERE` clauses, such as ISSUER_NAME, and map those to database columns.
-#             - Assess whether filters or aggregations are necessary.
-#             - Identify the time period and grouping conditions.
-#         3. **Observations**: Reflect on the reasoning steps, offer insights, and describe how the steps lead to the final query.
-#     - Think of this reasoning as the model describing the steps it took to create the query.
-#         1. Reasoning you provide should first focus on why a nested query was chosen or why it wasn't chosen.
-#         2. It should give a query plan on how to solve this question - explain the mapping of the columns to the words in the input question.
-#         3. It should explain each of the clauses and why they are structured the way they are structured. For example, if there is a `GROUP BY`, an explanation should be given as to why it exists.
-#         4. If there's any `SUM()` or any other function used it should be explained as to why it was required.
-    
-#     **Rules:**
-#     1. Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
-#     2. Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
-#     3. All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
-#     4. Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
-    
-#     **Schema for Output:**
-#     - This includes the reasonings schema above as an element
-#     - The final response should be a json with `names` as `generated_sql_query` and `reasonings`:
-#         1. `generated_sql_query` should provide the SQL query generated in string format.
-#         2. `reasonings` should provide the reasoning steps adhering to the reasoning instructions.
-#     - This is the final answer.
-#     """
-#     return system_message
