@@ -27,6 +27,21 @@ __all__ = [
     "example_prompts_and_queries"
 ]
 
+# Load Environment Variables
+load_dotenv()
+API_KEY = os.getenv("OPENAI_API_KEY")
+openai.api_key = API_KEY
+
+# Database Path
+db_path = Path("data/sec_nport_data_combined.db")
+
+# Load the Schema
+schema_file_path = "data/data_schema2.txt"
+schema = load_schema(schema_file_path)
+key_schema_file_path = "data/key_schema.txt"
+key_schema = load_schema(key_schema_file_path)
+
+
 # Pydantic Models
 class Background(BaseModel):
     """A setup to the background for the user."""
@@ -492,18 +507,6 @@ example_prompts_and_queries = {
     ]
 }
 
-# Load Environment Variables
-load_dotenv()
-API_KEY = os.getenv("OPENAI_API_KEY")
-openai.api_key = API_KEY
-
-# Database Path
-db_path = Path("data/sec_nport_data_combined.db")
-
-# Load the Schema
-schema_file_path = "data/data_schema2.txt"
-schema = load_schema(schema_file_path)
-
 # User Prompt Generation
 def get_user_prompt_for_question(input_question: str) -> str:
     """
@@ -522,12 +525,22 @@ def get_user_prompt_for_question(input_question: str) -> str:
     **Database Schema Description**
     Examine the following schema details to understand the database structure:
     {schema}
+    
+    Examine the following key schema that identifies the primary keys for each table in the database:
+    {key_schema}
 
     **Example Natural Language Questions and Their Corresponding SQL Queries and Reasonings**
     Examine the following examples as a reference to guide your response:
     - Easy Questions: {[example for example in example_prompts_and_queries['easy']]}
     - Medium Questions: {[example for example in example_prompts_and_queries['medium']]}
     - Hard Questions: {[example for example in example_prompts_and_queries['hard']]}
+
+    **Rules for SQL Query Generation**
+    - Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
+    - Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
+    - All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
+    - Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
+    - Use the key schema to identify the primary keys for each table in the database. If you need to join two tables that do not have the same primary key, find an intermidiate table that has both primary keys.
     """)
 
     user_prompt = textwrap.dedent(f"""
@@ -659,6 +672,8 @@ def execute_sql_query(query: str, db_path: Path) -> Optional[pd.DataFrame]:
         1. Review Database Schema
         - Examine the following schema details to understand the database structure:
         {schema}
+        - Examine the following key schema that identifies the primary keys for each table in the database:
+        {key_schema}
         2. Review Example User Questions, Queries, and Reasonings
         - Examine the following examples as a reference to guide your corrected response:
             - Easy Questions: {[example for example in example_prompts_and_queries['easy']]}
@@ -678,6 +693,7 @@ def execute_sql_query(query: str, db_path: Path) -> Optional[pd.DataFrame]:
             - Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
             - All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
             - Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
+            - Use the key schema to identify the primary keys for each table in the database. If you need to join two tables that do not have the same primary key, find an intermidiate table that has both primary keys.
         6. Correct the Query and Corresponding Reasoning:
         - Modify the SQL query to address the identified issues, ensuring it correctly fetches the requested data according to the database schema and query requirements.
 
