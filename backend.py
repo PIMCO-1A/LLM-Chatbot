@@ -666,23 +666,23 @@ def execute_sql_query(query: str, db_path: Path) -> Optional[pd.DataFrame]:
             - Hard Questions: {[example for example in example_prompts_and_queries['hard']]}
         3. Analyze Query Requirements:
         - Original Question: Consider what information the query is supposed to retrieve.
+            - Here's the question that the user entered: {input_question}
         - Executed SQL Query: Review the SQL query that was previously executed and led to an error or incorrect result.
         - Execution Result: Analyze the outcome of the executed query to identify why it failed (e.g., syntax errors, incorrect column references, logical mistakes).
-        4. Adhere to Rules:
+        4. Review Reasoning Instructions:
+        {reasoning_instructions}
+        {reasoning_schema_instructions}
+        5. Adhere to Rules:
         - Remember the rules you must follow:
             - Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
             - Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
             - All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
             - Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
-        5. Correct the Query:
+        6. Correct the Query and Corresponding Reasoning:
         - Modify the SQL query to address the identified issues, ensuring it correctly fetches the requested data according to the database schema and query requirements.
 
         **Schema for Output:**
-        - This includes the reasonings schema above as an element
-        - The final response should be a JSON with `generated_sql_query` and `reasonings`:
-            1. `generated_sql_query` should provide the SQL query generated in string format.
-            2. `reasonings` should provide the reasoning steps adhering to the reasoning instructions.
-        - This is the final answer.
+        - This can be found in the {reasoning_schema_instructions}
 
         Based on the question, table schema, and previous query, analyze the result to fix the query and make it valid and executable.
         """)

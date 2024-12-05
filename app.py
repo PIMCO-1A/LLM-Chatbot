@@ -6,7 +6,7 @@ from backend import (
     query_openai,
     openai_message_creator,
     generate_system_message,
-    get_user_prompt_for_question,  # Added this import
+    get_user_prompt_for_question,  
     schema,
     example_prompts_and_queries
 )
