@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 import openai
 import io
+import json
 from dotenv import load_dotenv
 from pathlib import Path
 from api_connection import openai_message_creator, query_openai, schema_to_string, process_prompt_for_quarter_year
@@ -496,7 +497,7 @@ def execute_sql_query(query, db_path):
         1. Review Database Schema
         - Examine the following schema details to understand the database structure:
         {schema_to_string(schema)}
-        2. Review Example User Questions, Queries, and Explanations
+        2. Review Example User Questions, Queries, and Reasonings
         - Examine the following examples as a reference to guide your corrected response:
             - Easy Questions: {[example for example in example_prompts_and_queries['easy']]}
             - Medium Questions: {[example for example in example_prompts_and_queries['medium']]}
@@ -509,15 +510,17 @@ def execute_sql_query(query, db_path):
         - Remember the rules you must follow:
             - Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
             - Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
-            - All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
-            - When you start the Explanation you must put “Explanation:” before it
+            - All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)\
             - Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
         5. Correct the Query:
         - Modify the SQL query to address the identified issues, ensuring it correctly fetches the requested data according to the database schema and query requirements.
 
-        **Output Format**
-        [SQL Query]
-        Explanation: [Explanation of SQL Query]
+        **Schema for Output:**
+        - This includes the reasonings schema above as an element
+        - The final response should be a json with `names` as `generated_sql_query` and `reasonings`:
+            1. `generated_sql_query` should provide the SQL query generated in string format.
+            2. `reasonings` should provide the reasoning steps adhering to the reasoning instructions.
+        - This is the final answer.
         
         Based on the question, table schema, and previous query, analyze the result to fix the query and make it valid and executable.
         """
@@ -525,24 +528,21 @@ def execute_sql_query(query, db_path):
         # Query OpenAI to fix the query
         fixing_response = query_openai(openai_message_creator(
             user_message_string=query_fixing_prompt,
-            system_message_string="You are an expert SQL assistant. Review the SQL query for errors and provide corrections with explanations."
+            system_message_string="You are an expert SQL assistant. Review the SQL query for errors and provide corrections with reasoning."
         ))
         
         if fixing_response:
-            # Parse the response to extract the suggested corrected query and explanation
-            if "Explanation:" in fixing_response:
-                fixed_query, explanation = fixing_response.split("Explanation:", 1)
-                fixed_query = fixed_query.strip()
-                explanation = explanation.strip()
-            else:
-                fixed_query = fixing_response.strip()
-                explanation = "No explanation provided."
-            
-            # Return the fixed query and explanation
-            return fixed_query, explanation
-        
-        # If no response, return the error message
-        return f"Error: {e}", None
+            try: 
+                # Parse the response to extract the suggested corrected query and reasoning
+                response_json = json.loads(fixing_response)
+                fixed_sql_query = response_json.get('generated_sql_query', '').strip()
+                fixed_reasoning_list = response_json.get('reasonings', [])
+                fixed_reasoning = "\n\n".join(f"- **{type(r).__name__}**: {r}" for r in reasoning_list)
+
+                # Return the fixed query and reasoning
+                return fixed_query, fixed_reasoning
+            except json.JSONDecodeError:
+                st.error("Error decoding response from OpenAI. Please try again.")
 
 # function to validate SQL query
 def validate_sql_query(query):
@@ -561,8 +561,8 @@ if "persistent_query_log" in st.session_state and st.session_state.persistent_qu
         st.markdown(query_record["question"])
         st.write("#### SQL Query")
         st.code(query_record["query"], language="sql")
-        st.write("#### Explanation")
-        st.markdown(query_record["explanation"])
+        st.write("#### Reasoning")
+        st.markdown(query_record["reasoning"])
         st.write("#### Results")
         st.dataframe(query_record["results"])
 
@@ -579,12 +579,12 @@ if prompt := st.chat_input("Enter your question about the database:"):
     
     # Process specific dates or date ranges in the prompt
     refined_prompt = process_prompt_for_quarter_year(prompt)
-    refined_prompt = f"Generate an SQL query for this request: '{refined_prompt}'. Return only the query and an explanation."
+    refined_prompt = f"Generate an SQL query for this request: '{refined_prompt}'. Return only the query and reasoning."
 
     # Generate OpenAI messages with schema and examples
     system_message_string = f"""
     **Task Description:**
-    You are an assistant that generates SQL queries and their explanations based on user questions related to the SEC N-PORT dataset. 
+    You are an assistant that generates SQL queries and their reasonings based on user questions related to the SEC N-PORT dataset. 
     N-PORT filings contain detailed reports submitted by registered investment companies, including mutual funds and exchange-traded funds (ETFs), which disclose their portfolio holdings on a monthly basis. 
     These filings provide transparency into the asset composition, performance, and risk exposures of these funds, offering valuable insights for investors, regulators, and researchers.
     Your goal is to write, explain, and execute SQL queries on a SQLite database to answer natural language questions asked by the user. 
@@ -594,7 +594,7 @@ if prompt := st.chat_input("Enter your question about the database:"):
     - Examine the following schema details to understand the database structure:
     {schema_to_string(schema)}
 
-    2. Review Example User Questions, Queries, and Explanations
+    2. Review Example User Questions, Queries, and Reasonings
     - Examine the following examples as a reference to guide your response:
         - Easy Questions: {[example for example in example_prompts_and_queries['easy']]}
         - Medium Questions: {[example for example in example_prompts_and_queries['medium']]}
@@ -620,12 +620,11 @@ if prompt := st.chat_input("Enter your question about the database:"):
     1. Only use `QUARTER` and `YEAR` in the SQL query, do not use any specific dates. If the user question contains a specific date, please convert this to the appropriate year and quarter.
     2. Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
     3. All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
-    4. When you start the Reasoning you must put “Reasoning:” before it
-    5. Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
+    4. Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
 
     **Schema for Output:**
     - This includes the reasonings schema above as an element
-    - The final response should be a json with `names` as `generated_sql_query` and `reasoning`:
+    - The final response should be a json with `names` as `generated_sql_query` and `reasonings`:
         1. `generated_sql_query` should provide the SQL query generated in string format.
         2. `reasonings` should provide the reasoning steps adhering to the reasoning instructions.
     - This is the final answer.
@@ -638,14 +637,17 @@ if prompt := st.chat_input("Enter your question about the database:"):
         # Assuming response is a well-formed JSON string from OpenAI, parse it
         try:
             response_json = json.loads(response)
-            # Extract the generated SQL query and explanation
+            print(f"Full OpenAI Response: {response_json}")
+
+            # Extract the generated SQL query and reasoning
             generated_sql_query = response_json.get('generated_sql_query', '').strip()
-            explanation = response_json.get('reasoning', {}).get('text', 'No explanation provided').strip()
+            reasoning = response_json.get('reasonings', 'No reasoning provided.')
             
             # Clean the SQL query before executing it
             cleaned_sql_query = generated_sql_query.replace("```sql", "").replace("```", "").strip()
 
             print(f"Cleaned SQL Query:\n{cleaned_sql_query}")
+            print(f"Reasoning:\n{reasoning}")
 
             # Validate the cleaned query
             if validate_sql_query(cleaned_sql_query):
@@ -653,22 +655,22 @@ if prompt := st.chat_input("Enter your question about the database:"):
                 df_result = execute_sql_query(cleaned_sql_query, db_path)
                 
                 if df_result is not None:
-                    # Save query, explanation, and results to persistent query log
+                    # Save query, reasoning, and results to persistent query log
                     query_record = {
                         "question": prompt,
                         "query": cleaned_sql_query,
-                        "explanation": explanation,
+                        "reasoning": reasoning,
                         "results": df_result
                     }
                     st.session_state.persistent_query_log.append(query_record)
 
-                    # Display SQL query, explanation, and results
+                    # Display SQL query, reasoning, and results
                     st.write("#### Question")
                     st.markdown(query_record["question"])
                     st.write("#### SQL Query")
                     st.code(query_record["query"], language="sql")
-                    st.write("#### Explanation")
-                    st.markdown(query_record["explanation"])
+                    st.write("#### Reasoning")
+                    st.markdown(query_record["reasoning"])
                     st.write("#### Results")
                     st.dataframe(query_record["results"])
 
