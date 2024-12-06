@@ -94,7 +94,7 @@ if prompt:
             # Validate the cleaned query
             if validate_sql_query(cleaned_sql_query):
                 # Execute the cleaned query
-                df_result = execute_sql_query(cleaned_sql_query, Path("data/sec_nport_data_combined.db"))
+                df_result = execute_sql_query(cleaned_sql_query, Path("data/sec_nport_data_combined.db"), prompt)
 
                 if df_result is not None:
                     # Save query, reasoning, and results to persistent query log
