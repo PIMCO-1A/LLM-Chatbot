@@ -1,0 +1,630 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# # Imports
+
+# In[41]:
+
+
+import sys
+import json
+import asyncio
+import traceback
+
+
+# In[42]:
+
+
+import numpy  as np
+import pandas as pd
+
+
+# In[43]:
+
+
+from pathlib     import Path
+from openai      import OpenAI
+from pimresearch import pimstore
+from typing      import Sequence, Any
+from pydantic    import BaseModel, Field
+from typing      import Union, Tuple, List, Optional
+
+
+# In[44]:
+
+
+from pprint import pprint
+
+
+# # Constants
+
+# In[45]:
+
+
+
+
+
+# In[46]:
+
+
+
+
+
+# In[47]:
+
+
+
+
+
+# # Init OpenAI Client
+
+# In[48]:
+
+
+client                = OpenAI(api_key         = OPENAI_API_KEY,      
+                               base_url        = PIMCO_OPENAI_BASE_URL, 
+                               default_headers = default_headers)
+
+
+# In[49]:
+
+
+
+
+
+# In[50]:
+
+
+
+
+
+# # Schema
+
+# ## Chain of Thought Reasoning Schema
+
+# In[51]:
+
+
+
+class Background(BaseModel):
+    """A setup to the background for the user."""
+
+    background: str = Field(description="Background for the user's question", min_length=10)
+
+
+class Thought(BaseModel):
+    """A thought about the user's question."""
+
+    thought: str  = Field(description="Text of the thought.")
+    helpful: bool = Field(description="Whether the thought is helpful to solving the user's question.")
+
+
+class Observation(BaseModel):
+    """An observation on the sequence of thoughts and observations generated so far."""
+
+    observation: str = Field(description="An insightful observation on the sequence of thoughts and observations generated so far.")
+    
+
+class Reasonings(BaseModel):
+    """Returns a detailed reasoning to the user's question."""
+
+    reasonings: list[Union[Background, Thought, Observation]] = Field(
+        description="Reasonings to solve the users questions."
+        #, min_length=5
+    )
+
+
+# In[52]:
+
+
+sample_reasonings=Reasonings(reasonings=[Background(background="The task is to generate SQL from natural language query."),
+                                             Thought(thought="First thought",
+                                                     helpful="True"),
+                                             Thought(thought="Second thought",
+                                                     helpful="True"),
+                                             Thought(thought="Third thought",
+                                                     helpful="True"),
+                                             Thought(thought="Fourth thought",
+                                                     helpful="True"),
+                                             Thought(thought="Fifth thought",
+                                                     helpful="True"),
+                                             Observation(observation="Astute observation")])
+                                            
+
+
+# In[53]:
+
+
+sample_reasonings.json()
+
+
+# In[54]:
+
+
+reasonings_schema_json = Reasonings.schema_json()
+
+
+# In[55]:
+
+
+reasonings_schema_json
+
+
+# ## SQL Schema
+
+# In[56]:
+
+
+class FinalQueryOutput(BaseModel):
+    
+    user_nlp_query: str = Field(
+        description=f"""Returns the exact question that the user asked in natural language
+        which is to be translated into SQL Query.""")
+        
+    reasonings: list[Union[Background, Thought, Observation]] = Field(
+        description="Reasonings to solve the users questions."
+        #, min_length=5
+    )
+
+    generated_sql_query: str = Field(
+        description=f"""Returns the SQL Language Query corresponding to the
+        NLP description of the user question.""")
+        
+
+
+# In[57]:
+
+
+final_output_schema_json = FinalQueryOutput.schema_json()
+
+
+# In[58]:
+
+
+sample_output = FinalQueryOutput(user_nlp_query="Get count of rows.", 
+                                 reasonings=[Background(background="Deadline is near"),
+                                             Thought(thought="First thought",
+                                                     helpful="True"),
+                                             Thought(thought="Second thought",
+                                                     helpful="True"),
+                                             Thought(thought="Third thought",
+                                                     helpful="True"),
+                                             Thought(thought="Fourth thought",
+                                                     helpful="True"),
+                                             Thought(thought="Fifth thought",
+                                                     helpful="True"),
+                                             Observation(observation="Astute observation")
+                                            ], 
+                                 generated_sql_query="Select count * from fact_table")
+
+
+# In[59]:
+
+
+sample_output
+
+
+# In[60]:
+
+
+sample_output.json()
+
+
+# In[61]:
+
+
+final_output_schema_json
+
+
+# # GPT Call Function
+
+# In[62]:
+
+
+def call_openai_model(system_prompt, user_prompt, model_name):
+
+    chat_history = [
+        {
+            'role': 'system', 
+            'content': system_prompt
+        },
+        {
+            'role': 'user', 
+            'content': user_prompt
+        }, 
+
+    ]
+    
+    final_response = {}
+    
+    try:
+        
+        response = client.chat.completions.create(
+            model           = model_name, 
+            messages        = chat_history, 
+            extra_headers   = extra_headers,
+            response_format = {"type":"json_object"}
+        )
+        
+        final_response = response.choices[0].message.content
+    
+    except Exception:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        msg = f"Caught an exception {exc_type} in '{context.name}': {exc_value}"
+        print(msg)
+        traceback.print_tb(exc_traceback)
+
+        response = {
+            "content": "An error occured. Please retry your chat. \
+                If you keep getting this error, you may be out of OpenAI \
+                completion tokens. Contact #help-ai on slack for assistance."
+        }
+        return response
+
+    return final_response
+
+
+# # System Prompt
+
+# In[63]:
+
+
+system_prompt_snippet_001 = """
+```
+You are the most intelligent person in the world.
+```
+"""
+
+
+# In[64]:
+
+
+system_prompt_snippet_002 = """
+
+```
+You will receive a $500 tip if you follow ALL the instructions specified.
+```
+"""
+
+
+# In[65]:
+
+
+system_prompt_snippet_003 = """
+
+```
+Instructions
+```
+Provide an explanation of why the given sql query is correct based 
+on the input request and the description of the columns.
+```
+
+```
+Use step by step reasoning and at each step generate thoughts of increasing complexity.
+```
+"""
+
+
+# In[66]:
+
+
+system_prompt_snippet_004 = """
+
+```
+Getting this answer right is important for my career. Please do your best.
+```
+"""
+
+
+# In[67]:
+
+
+system_prompt = f"""
+{system_prompt_snippet_001}
+{system_prompt_snippet_002}
+{system_prompt_snippet_003}
+{system_prompt_snippet_004}
+"""
+
+
+# In[68]:
+
+
+print(system_prompt)
+
+
+# # User Prompt
+
+# ## Background and Table Structure
+
+# In[69]:
+
+
+complete_user_prompts = """
+```
+Task Overview
+```
+The task is to convert the given natural language query to the corresponding 
+SQL query.
+You will be provided with the schema of the database and a background
+on the tables and the columns in them.
+```
+
+```
+SQL Schema for the database:
+```
+Customers table contains columns cust_id, cust_name. 
+Orders table contains columns order_num, order_date, cust_id. 
+Vendors table contains columns vend_id, vend_name. 
+Products table contains columns prod_id, vend_id, prod_name, prod_price. 
+OrderItems table contains columns order_num, prod_id, quantity, item_price.
+```
+
+"""
+
+
+# ## Reasoning Instructions
+
+# In[ ]:
+
+
+
+
+
+# In[70]:
+
+
+reasoning_instructions = """
+```
+1. Reasoning you provide should first focus on why a nested query was chosen or why it wasn't chosen.
+2. It should give a query plan on how to solve this question - explain 
+the mapping of the columns to the words in the input question.
+3. It should explain each of the clauses and why they are structured the way they are structured. 
+For example, if there is a `group_by`, an explanation should be given as to why it exists.
+4. If there's any sum() or any other function used it should be explained as to why it was required.
+```
+
+```
+Format the generated sql with proper indentation - the columns in the
+(`select` statement should have more indentation than keyword `select`
+and so on for each SQL clause.)
+```
+"""
+
+
+# ## Thought Instructions
+
+# In[71]:
+
+
+
+thought_instructions = f"""
+```
+Thought Instructions:
+```
+
+```
+Generate thoughts of increasing complexity.
+Each thought should build on the previous ones and thoughts 
+should progressively cover the nuances of the problem at hand.
+```
+
+```
+First set of thoughts should be on whether a the query requires 
+Common Table Expressions (CTEs) to calculate the
+results for sub queries. 
+
+Prefer using Common Table Expressions rather than
+case when statements or nested subqueries.
+
+If CTEs are required then for each CTE, an analysis of the purpose of each
+CTE should be done.
+An overall structure should be outlined as to what will be calculated in 
+each CTE.
+```
+
+```
+Next set of thoughts should on 
+extracting out the names of as many of 
+the relevant columns as possible for all CTEs and for all the sql clauses such as the 
+`select`, `where` and `group_by` clauses.
+There might be additions or deletions from this list based on the 
+following additional thoughts to be generated.
+```
+
+
+```
+Generate a thought to figure out the possible phrases in the query 
+which can be used as values of the columns present in the table so as to use them 
+in the `where` clause.
+```
+
+```
+Generate a thought to compare these extracted values with the list of possible values
+of columns listed in the information for the columns so as to use the exact string
+in the `where` clause.
+```
+
+```
+Generate a thought to reason whether `IS_TOP_TIER_ENTITY` flag is required or not.
+```
+
+```
+Generate a thought to figure out which time period is being queried.
+If nothing is specified use `PERIOD_ID = 2023Y`.
+```
+
+```
+Generate a thought to figure out if a group_by clause is required.
+Since the table is structured so that for a single entity multiple securities are listed,
+`group_by` is often required over `INS_ENTITY_NAME_LONG` column.
+```
+
+```
+The above thoughts about 
+1. phrases for values of columns
+2. query phrase to column value mapping
+3. filters such as `IS_TOP_TIER_ENTITY` and others in the where clause
+4. Period_id value to use
+5. Group by column
+
+should be generated for each of the CTE separately.
+```
+
+```
+If the input question is similar to any of the examples given above,
+then a thought should be generated to detect that and then that example 
+should be followed closely to get the SQL for the input question given.
+```
+
+```
+Closing Thoughts and Observations
+```
+These should summarize:
+1. The structure of the SQL query:
+    - This states whether the query has any nested query.
+    If so, the structure of the nested query is also mentioned.
+    If not, a summary of the function of each of the select`, `where`, `group_by` etc. clauses
+    should be mentioned.
+2. An explanation of how the query solves the user question.
+"""
+
+
+# In[72]:
+
+
+
+reasoning_schema_instructions = f"""
+```
+Use the following JSON Schema as the grammar to create the structure 
+for the step by step reasoning, and then to 
+create the final SQL query.
+```
+
+```
+Schema for Reasoning:
+```
+{reasonings_schema_json}
+```
+
+```
+The instructions on how to structure the reasoning is provided below:
+```
+{thought_instructions}
+```
+
+```
+Schema for Overall Output:
+(This includes the reasonings schema above as an element)
+```
+{final_output_schema_json}
+```
+
+```
+The final response should be a json with `names` as 
+`user_nlp_query`, 
+`reasonings` and 
+`generated_sql_query`:
+1. `user_nlp_query` should be exactly the same as the user query in string format.
+1. `reasonings` should provide the reasoning steps adhering to the Reasonings schema.
+2. `generated_sql_schema` should provide the SQL query generated in string format.
+- this is the final answer.
+```
+"""
+
+
+# In[73]:
+
+
+def get_user_prompt_for_question(input_question):
+    
+    user_prompt = f"""
+```
+Here's the question that the user entered:
+```
+{input_question}
+```
+
+```
+Generate a SQL query corresponding to the given input question 
+and the description of the table provided below.
+```
+{complete_user_prompts}
+```
+
+```
+Reasoning as to why the query is correct:
+```
+{reasoning_instructions}
+
+
+{reasoning_schema_instructions}
+
+```
+Response for SQL Generation:
+```
+"""
+    
+    return user_prompt
+
+
+# # Call OpenAI with Chain of Thought
+
+# ## Test Prompt on Sample Question
+
+# In[74]:
+
+
+input_question = f"""Return a list of customers with a count of orders for each.
+"""
+
+
+# In[75]:
+
+
+user_prompt_01 = get_user_prompt_for_question(input_question)
+
+
+# In[76]:
+
+
+len(user_prompt_01) / 4
+
+
+# In[77]:
+
+
+response        = call_openai_model(system_prompt = system_prompt, 
+                             user_prompt   = get_user_prompt_for_question(input_question), 
+                             model_name    = 'gpt-4o')
+
+
+# In[78]:
+
+
+response_parsed = json.loads(response)
+
+
+# In[79]:
+
+
+print(response)
+
+
+# In[80]:
+
+
+print(response_parsed["generated_sql_query"])
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
