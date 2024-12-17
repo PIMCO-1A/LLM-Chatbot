@@ -15,7 +15,7 @@ API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=API_KEY)
 
 # Load the schema
-schema_file_path = "data/data_schema2.txt"
+schema_file_path = "data/data_schema.txt"
 schema = load_schema(schema_file_path)
 
 def schema_to_string(schema):

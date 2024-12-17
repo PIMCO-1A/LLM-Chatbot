@@ -632,7 +632,7 @@ if prompt := st.chat_input("Enter your question about the database:"):
             
             # Clean the SQL query before executing it
             uncleaned_sql_query = generated_sql_query.replace("```sql", "").replace("```", "").strip()
-            cleaned_sql_query = "\n".join(line.strip() for line in uncleaned_sql_query.split(";") if line) + ";"
+            cleaned_sql_query = "\n".join(line.strip() for line in uncleaned_sql_query.splitlines() if line)  # Split by newlines
 
             print(f"Cleaned SQL Query:\n{cleaned_sql_query}")
             print(f"Reasoning:\n{reasoning}")
