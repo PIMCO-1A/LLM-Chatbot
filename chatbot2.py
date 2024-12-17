@@ -537,10 +537,10 @@ def execute_sql_query(query, db_path):
                 response_json = json.loads(fixing_response)
                 fixed_sql_query = response_json.get('generated_sql_query', '').strip()
                 fixed_reasoning_list = response_json.get('reasonings', [])
-                fixed_reasoning = "\n\n".join(f"- **{type(r).__name__}**: {r}" for r in fixed_reasoning_list)
+                fixed_reasoning = "\n\n".join(f"- **{type(r).__name__}**: {r}" for r in reasoning_list)
 
                 # Return the fixed query and reasoning
-                return fixed_sql_query, fixed_reasoning
+                return fixed_query, fixed_reasoning
             except json.JSONDecodeError:
                 st.error("Error decoding response from OpenAI. Please try again.")
 
@@ -692,3 +692,19 @@ if prompt := st.chat_input("Enter your question about the database:"):
                 st.error("Invalid SQL query generated. Please review.")
         except json.JSONDecodeError:
             st.error("Error decoding response from OpenAI. Please try again.")
+
+
+
+
+
+
+# {
+#             "question": " ",
+#             "query": """
+            
+#             """,
+#             "reasoning": """
+            
+#             """,
+#             "schema_links": " "
+#         }
