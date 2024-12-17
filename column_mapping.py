@@ -366,7 +366,7 @@ def get_user_prompt_for_question(input_sql_query_1, input_sql_query_2, input_tab
 ## Test Prompt on Sample Question
 """
 
-input_table_schema_for_db = "data/data_schema2.txt"
+input_table_schema_for_db = "data/data_schema.txt"
 
 
 def normalize_select_expressions(ast):
@@ -592,13 +592,14 @@ WHERE NET_ASSETS > 100 * (
     WHERE YEAR = 2020 AND QUARTER = 1
 )
 AND YEAR = 2020 AND QUARTER = 1;'''
-hard8_model = '''SELECT fri.SERIES_NAME, fri.NET_ASSETS
+hard8_model = '''SELECT SERIES_NAME
 FROM FUND_REPORTED_INFO fri
-WHERE fri.YEAR = 2020 AND fri.QUARTER = 1 AND fri.NET_ASSETS > (
-    SELECT MAX(UNREALIZED_APPRECIATION) * 100
-    FROM FUT_FWD_NONFOREIGNCUR_CONTRACT
-    WHERE YEAR = 2020 AND QUARTER = 1
-);'''
+WHERE fri.NET_ASSETS > (
+    SELECT MAX(ffnc.UNREALIZED_APPRECIATION) * 100
+    FROM FUT_FWD_NONFOREIGNCUR_CONTRACT ffnc
+    WHERE ffnc.YEAR = 2020 AND ffnc.QUARTER = 1
+)
+AND fri.YEAR = 2020 AND fri.QUARTER = 1;'''
 hard8_accuracy = are_queries_ast_similar(hard8_gold,hard8_model)
 
 # Hard9 = "List the funds with non-cash collateral where total assets are less than the sum of values from index components in Q2 2024."
@@ -955,20 +956,20 @@ def hard_accuracy(hard_csv_accuracy, gold, model, input_table_schema_for_db, com
     print("Combined Accuracy for Hard: " + str(avg_combined_hard_acc) + "\n")
     return avg_combined_hard_acc, avg_hard_db_acc, avg_hard_sql_acc
 
-#easy, easy_csv, easy_sql = easy_accuracy(easy_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, easy_sql_accuracy)
+easy, easy_csv, easy_sql = easy_accuracy(easy_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, easy_sql_accuracy)
 medium, medium_csv, medium_sql = medium_accuracy(medium_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, medium_sql_accuracy)
-#hard, hard_csv, hard_sql = hard_accuracy(hard_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, hard_sql_accuracy)
+hard, hard_csv, hard_sql = hard_accuracy(hard_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, hard_sql_accuracy)
 
 print("****SUMMARY****")
-#print("Easy Accuracy: " + str(easy))
+print("Easy Accuracy: " + str(easy))
 print("Medium Accuracy: " + str(medium))
-#print("Hard Accuracy: " + str(hard))
+print("Hard Accuracy: " + str(hard))
 
-# csv_accuracy = round(((easy_csv + medium_csv + hard_csv) / 3), 2)
-# print("\nOverall Output Accuracy: " + str(csv_accuracy))
+csv_accuracy = round(((easy_csv + medium_csv + hard_csv) / 3), 2)
+print("\nOverall Output Accuracy: " + str(csv_accuracy))
 
-# sql_accuracy = round(((easy_sql + medium_sql + hard_sql) / 3), 2)
-# print("Overall SQL Accuracy: " + str(sql_accuracy))
+sql_accuracy = round(((easy_sql + medium_sql + hard_sql) / 3), 2)
+print("Overall SQL Accuracy: " + str(sql_accuracy))
 
-# accuracy = round(((easy + medium + hard) / 3), 2)
-# print("Overall Model Accuracy: " + str(accuracy))
+accuracy = round(((easy + medium + hard) / 3), 2)
+print("Overall Model Accuracy: " + str(accuracy))

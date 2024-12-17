@@ -1,150 +1,455 @@
-﻿,SERIES_NAME,NET_ASSETS
-0,Asset Allocation Fund,27420412062.52
-1,iShares MSCI South Korea ETF,4218591433.85
-2,PGIM Total Return Bond Fund,55073191637.41
-3,T. Rowe Price Retirement 2055 Fund,4056118942.06
-4,THE HARTFORD MIDCAP FUND,14396639559.35
-5,U.S. Total Bond Index Master Portfolio,11172370716.65
-6,T. Rowe Price Retirement I 2030 Fund - I Class,7114750298.62
-7,Delaware Value Fund,14819002167.95
-8,T. Rowe Price Dynamic Global Bond Fund,4614227831.74
-9,JOHCM International Select Fund,8863505520.48
-10,Loomis Sayles Strategic Income Fund,7004664400.07
-11,Franklin New York Tax-Free Income Fund,3938258280.2
-12,Edgewood Growth Fund,17757390322.92
-13,Strategic Advisers Small-Mid Cap Fund,8134200363.1
-14,Federated Total Return Bond Fund,8564622213.05
-15,Franklin Mutual Shares VIP Fund,3211769934.23
-16,Columbia Acorn Fund,4165937609.48
-17,JPMorgan SmartRetirement 2045 Fund,4165609808.59
-18,JNL/Mellon Healthcare Sector Fund,3351228524.04
-19,iShares Short-Term Corporate Bond ETF,13207921686.87
-20,VANGUARD EQUITY INCOME FUND,39269255180.63
-21,North Carolina Capital Management Trust - Term Portfolio,4568597944.93
-22,S&P 500 Index Master Portfolio,23224427013.38
-23,T.A. World ex U.S. Core Equity Portfolio,4049768174.89
-24,BARON GROWTH FUND,7285586284.26
-25,AST Advanced Strategies Portfolio,8760917082.95
-26,Fidelity Stock Selector All Cap Fund,9088863676.54
-27,Schwab U.S. Dividend Equity ETF,11208232649.3
-28,Baird Aggregate Bond Fund,23130624055.38
-29,Mid Cap Index Fund,3320458605.92
-30,Ivy Science and Technology Fund,8150137164.29
-31,iShares U.S. Real Estate ETF,4398470504.2
-32,Master Total Return Portfolio,16932953789.79
-33,PGIM Short Duration High Yield Income Fund,3165524537.77
-34,ProShares S&P 500 Dividend Aristocrats ETF,6227969128.06
-35,500 Index Trust,6126573722.1
-36,Fidelity SAI International Index Fund,6949995960.78
-37,The Consumer Discretionary Select Sector SPDR Fund,14362619399.98
-38,Northern Stock Index Fund,9934248714.61
-39,Merger Fund,3187699111.59
-40,PIMCO Total Return Portfolio,6366865712.43
-41,LifePath Index 2025 Master Portfolio,4506181435.71
-42,Fidelity Emerging Markets Fund,4468992702.78
-43,Invesco Oppenheimer Rochester High Yield Municipal Fund,7657782688.29
-44,College Retirement Equities Fund - Global Equities Account,21327030201
-45,VANGUARD RUSSELL 1000 GROWTH INDEX FUND,6369126131.56
-46,Franklin Income VIP Fund,4950790877.17
-47,LargeCap Growth Fund I,10263102792.02
-48,Intermediate-Term Bond Fund,3991959057.3
-49,VANGUARD LIFESTRATEGY CONSERVATIVE GROWTH FUND,10786364439.93
-50,Lord Abbett Floating Rate Fund,9384296552.27
-51,Janus Henderson Global Technology Fund,3706337285
-52,iShares MSCI Japan ETF,14373621615.86
-53,Fidelity Value Fund,6872110087.29
-54,Fidelity Freedom 2025 Fund,29204437284.49
-55,Janus Henderson Forty Fund,14301825152
-56,EQ/Moderate Growth Strategy Portfolio,7333873691.35
-57,Eaton Vance Global Macro Absolute Return Fund,3557326519.05
-58,Fidelity Capital and Income Fund,12484843111.12
-59,AB High Income Municipal Portfolio,3231575494.33
-60,Strategic Advisers Tax-Sensitive Short Duration Fund,3426277862.39
-61,First Trust Enhanced Short Maturity ETF,4987394014.77
-62,Lazard International Strategic Equity Portfolio,6306853524.53
-63,T. Rowe Price Institutional Large-Cap Growth Fund,16601598439.79
-64,Angel Oak Multi-Strategy Income Fund,7740672567.08
-65,American Funds Moderate Growth and Income Portfolio,9727243514.84
-66,ClearBridge Dividend Strategy Fund,6809147937.33
-67,Metropolitan West Total Return Bond Fund,80538390448.62
-68,VANGUARD MID-CAP VALUE INDEX FUND,21534835687.97
-69,AST Multi-Sector Fixed Income Portfolio,16299112243.15
-70,THRIVENT MODERATE ALLOCATION PORTFOLIO,10457675194.09
-71,Intermediate-Term Tax-Free Bond Fund,4046069898.36
-72,Nuveen Short Duration High Yield Municipal Bond Fund,6554868168
-73,International Fund,10086463884.58
-74,Nuveen AMT-Free Quality Municipal Income Fund,4439423377
-75,Bond Fund,10548596180.43
-76,VANGUARD GLOBAL EQUITY FUND,7095053371.4
-77,iShares National Muni Bond ETF,15033977686.21
-78,First Eagle Global Fund,49622101397.46
-79,AST AllianzGI World Trends Portfolio,5033609592.87
-80,American Funds 2030 Target Date Retirement Fund,27005027144.84
-81,Fidelity Growth and Income Portfolio,6671773509.98
-82,VANGUARD SHORT-TERM TREASURY FUND,8871228169.32
-83,SIMT Tax-Managed Large Cap Fund,4246406371.06
-84,TIAA-CREF S&P 500 Index Fund,6024178184
-85,DFA FIVE-YEAR GLOBAL FIXED INCOME PORTFOLIO,15200153109.63
-86,Templeton World Fund,3539500473.62
-87,JNL/S&P Managed Moderate Growth Fund,5746292010.65
-88,Fidelity Inflation-Protected Bond Index Fund,7058363629.95
-89,MFS Diversified Income Fund,3997466896.83
-90,Fidelity Nasdaq Composite Index Fund,7152510697.87
-91,Davis New York Venture Fund,8722145211.42
-92,SPDR Portfolio S&P 500 Value ETF,5006742636.32
-93,Franklin Federal Intermediate Term Tax Free Income Fund,3622253132.23
-94,Victory Sycamore Small Company Opportunity Fund,5612336329.91
-95,TCW Total Return Bond Fund,6377569779.14
-96,Fidelity Freedom Index 2030 Fund,8177059712.52
-97,LifePath Index 2035 Master Portfolio,4076580991
-98,THE HARTFORD BALANCED INCOME FUND,13755730814.27
-99,VANGUARD TOTAL INTERNATIONAL STOCK INDEX FUND,411020286456.68
-100,VANGUARD TAX-MANAGED BALANCED FUND,5423307928.72
-101,First Trust Dow Jones Internet Index Fund,7853256374.55
-102,Brighthouse Asset Allocation 80 Portfolio,10304475655.39
-103,SPDR(R) Bloomberg Barclays High Yield Bond ETF,11416530318.05
-104,MFS International Diversification Fund,20861137200.75
-105,THE JAPANESE SMALL COMPANY SERIES,3588264553.84
-106,DNP Select Income Fund Inc,3328878878.82
-107,Invesco Equally-Weighted S&P 500 Fund,7761849345.22
-108,Schwab U.S. Broad Market ETF,15923395699.21
-109,Franklin Federal Tax-Free Income Fund,10983591828.07
-110,VANGUARD STRATEGIC EQUITY FUND,7474888602.38
-111,JNL/American Funds Blue Chip Income and Growth Fund,3301538703.69
-112,ATM Large Cap Managed Volatility Portfolio,3309945416.19
-113,"T. Rowe Price New Horizons Fund, Inc.",27921449382.57
-114,THE DFA INTERNATIONAL VALUE SERIES,12162217331.69
-115,VANGUARD INSTITUTIONAL INDEX FUND,243105022710.81
-116,Fidelity Freedom 2035 Fund,24600741966.78
-117,Janus Henderson Balanced Portfolio,5289107382
-118,T. Rowe Price Retirement 2030 Fund,21732883611.16
-119,Thornburg International Value Fund,3185607102.13
-120,PIMCO Short Asset Investment Fund,4664474187.79
-121,VOYA INTERMEDIATE BOND FUND,8167610758.5
-122,Fidelity Freedom 2045 Fund,15624044382.13
-123,Managed Volatility Balanced Portfolio,6775377150.82
-124,Select Fund,3519808687.21
-125,U.S. LARGE COMPANY PORTFOLIO,10008360962.42
-126,FIDELITY TOTAL BOND FUND,26120761822.45
-127,Boston Income Portfolio,4931435824.2
-128,Performance Trust Strategic Bond Fund,3183326547.3
-129,JPMorgan SmartRetirement 2020 Fund,5305168553.7
-130,Fidelity Investment Grade Bond Fund,5699405614.76
-131,PIMCO Total Return Fund,67096164564.6
-132,Fidelity Equity Dividend Income Fund,5250476276.13
-133,Catalyst/Millburn Hedge Strategy Fund,5399363271.43
-134,Schwab Short-Term U.S. Treasury ETF,5391686371.38
-135,SPDR DoubleLine Total Return Tactical ETF,3336643413.49
-136,CITY NATIONAL ROCHDALE FIXED INCOME OPPORTUNITIES FUND,3629320296.12
-137,Fidelity OTC Portfolio,21836177743.83
-138,Blue Chip Growth Fund,4096911779.12
-139,Absolute Return Fund,3135096203.88
-140,Transamerica JPMorgan Asset Allocation - Moderate Growth VP,4803952696.6
-141,iShares Core Dividend Growth ETF,10483664841.95
-142,JPMorgan Equity Index Fund,5312876763.06
-143,Diversified Bond Portfolio,4420262548.58
-144,iShares S&P Mid-Cap 400 Value ETF,6627881424.48
-145,VANGUARD SHORT-TERM TREASURY INDEX FUND,8543744823.1
-146,VANGUARD HIGH-YIELD CORPORATE FUND,26737757238.58
-147,College Retirement Equities Fund - Growth Account,27929347121
-148,Equity Income Fund,13070407940.76
+﻿,SERIES_NAME
+0,Asset Allocation Fund
+1,PGIM Total Return Bond Fund
+2,THE HARTFORD MIDCAP FUND
+3,U.S. Total Bond Index Master Portfolio
+4,Delaware Value Fund
+5,JOHCM International Select Fund
+6,Edgewood Growth Fund
+7,iShares Short-Term Corporate Bond ETF
+8,VANGUARD EQUITY INCOME FUND
+9,S&P 500 Index Master Portfolio
+10,Fidelity Stock Selector All Cap Fund
+11,Schwab U.S. Dividend Equity ETF
+12,Baird Aggregate Bond Fund
+13,Master Total Return Portfolio
+14,The Consumer Discretionary Select Sector SPDR Fund
+15,Northern Stock Index Fund
+16,College Retirement Equities Fund - Global Equities Account
+17,LargeCap Growth Fund I
+18,VANGUARD LIFESTRATEGY CONSERVATIVE GROWTH FUND
+19,Lord Abbett Floating Rate Fund
+20,iShares MSCI Japan ETF
+21,Fidelity Freedom 2025 Fund
+22,Janus Henderson Forty Fund
+23,Fidelity Capital and Income Fund
+24,T. Rowe Price Institutional Large-Cap Growth Fund
+25,American Funds Moderate Growth and Income Portfolio
+26,Metropolitan West Total Return Bond Fund
+27,VANGUARD MID-CAP VALUE INDEX FUND
+28,AST Multi-Sector Fixed Income Portfolio
+29,THRIVENT MODERATE ALLOCATION PORTFOLIO
+30,International Fund
+31,Bond Fund
+32,iShares National Muni Bond ETF
+33,First Eagle Global Fund
+34,American Funds 2030 Target Date Retirement Fund
+35,VANGUARD SHORT-TERM TREASURY FUND
+36,DFA FIVE-YEAR GLOBAL FIXED INCOME PORTFOLIO
+37,THE HARTFORD BALANCED INCOME FUND
+38,VANGUARD TOTAL INTERNATIONAL STOCK INDEX FUND
+39,Brighthouse Asset Allocation 80 Portfolio
+40,SPDR(R) Bloomberg Barclays High Yield Bond ETF
+41,MFS International Diversification Fund
+42,Schwab U.S. Broad Market ETF
+43,Franklin Federal Tax-Free Income Fund
+44,"T. Rowe Price New Horizons Fund, Inc."
+45,THE DFA INTERNATIONAL VALUE SERIES
+46,VANGUARD INSTITUTIONAL INDEX FUND
+47,Fidelity Freedom 2035 Fund
+48,T. Rowe Price Retirement 2030 Fund
+49,Fidelity Freedom 2045 Fund
+50,U.S. LARGE COMPANY PORTFOLIO
+51,FIDELITY TOTAL BOND FUND
+52,PIMCO Total Return Fund
+53,Fidelity OTC Portfolio
+54,iShares Core Dividend Growth ETF
+55,VANGUARD HIGH-YIELD CORPORATE FUND
+56,College Retirement Equities Fund - Growth Account
+57,Equity Income Fund
+58,JPMorgan Mid Cap Value Fund
+59,VANGUARD INSTITUTIONAL TARGET RETIREMENT 2025 FUND
+60,VANGUARD TAX-MANAGED CAPITAL APPRECIATION FUND
+61,PIMCO International Bond Fund (U.S. Dollar-Hedged)
+62,VANGUARD HIGH DIVIDEND YIELD INDEX FUND
+63,iShares MSCI Emerging Markets ETF
+64,iShares Core S&P 500 ETF
+65,Fidelity Freedom 2030 Fund
+66,Fidelity Balanced Fund
+67,Strategic Advisers Value Fund
+68,BlackRock High Yield Bond Portfolio
+69,Invesco Oppenheimer Global Fund
+70,VANGUARD MORTGAGE-BACKED SECURITIES INDEX FUND
+71,VANGUARD LARGE-CAP INDEX FUND
+72,iShares Intermediate-Term Corporate Bond ETF
+73,MFS International Intrinsic Value Fund
+74,EQ/Moderate-Plus Allocation Portfolio
+75,T.A. U.S. Core Equity 2 Portfolio
+76,Fidelity Small Cap Index Fund
+77,Blue Chip Income and Growth Fund
+78,The Technology Select Sector SPDR Fund
+79,VANGUARD SHORT-TERM INVESTMENT-GRADE FUND
+80,VANGUARD BALANCED INDEX FUND
+81,Harding Loevner International Equity Portfolio
+82,MFS Mid Cap Value Fund
+83,"Cohen & Steers Preferred Securities & Income Fund, Inc."
+84,VANGUARD LIFESTRATEGY MODERATE GROWTH FUND
+85,Fidelity Advisor Floating Rate High Income Fund
+86,Lord Abbett Short Duration Income Fund
+87,PGIM Short-Term Corporate Bond Fund
+88,Schwab Total Stock Market Index Fund
+89,VANGUARD LIFESTRATEGY GROWTH FUND
+90,New Economy Fund
+91,BlackRock National Municipal Fund
+92,VANGUARD SMALL-CAP VALUE INDEX FUND
+93,AB LARGE CAP GROWTH FUND INC
+94,VANGUARD BALANCED INDEX FUND
+95,JPMorgan Large Cap Growth Fund
+96,iShares U.S. Treasury Bond ETF
+97,Fidelity International Discovery Fund
+98,VANGUARD WINDSOR FUND
+99,American Funds 2020 Target Date Retirement Fund
+100,VANGUARD INSTITUTIONAL TARGET RETIREMENT 2030 FUND
+101,VANGUARD TARGET RETIREMENT 2040 FUND
+102,Janus Henderson Triton Fund
+103,DFA INTERNATIONAL VALUE PORTFOLIO
+104,iShares Russell Mid-Cap Growth ETF
+105,VANGUARD EMERGING MARKETS STOCK INDEX FUND
+106,Janus Henderson Enterprise Fund
+107,Brighthouse Asset Allocation 60 Portfolio
+108,VANGUARD PRIMECAP FUND
+109,Artisan International Value Fund
+110,Variable Portfolio - Managed Volatility Moderate Growth Fund
+111,Dodge & Cox Global Stock Fund
+112,"T. Rowe Price Blue Chip Growth Fund, Inc."
+113,T. Rowe Price Overseas Stock Fund
+114,Artisan International Fund
+115,VANGUARD TOTAL STOCK MARKET INDEX FUND
+116,Janus Henderson Research Fund
+117,Strategic Advisers Core Fund
+118,Capital World Bond Fund
+119,American Funds 2040 Target Date Retirement Fund
+120,Lord Abbett Ultra Short Bond Fund
+121,American Funds 2050 Target Date Retirement Fund
+122,American High Income Trust
+123,Fidelity Extended Market Index Fund
+124,Capital Income Builder
+125,New Perspective Fund
+126,Putnam Ultra Short Duration Income Fund
+127,Akre Focus Fund
+128,DoubleLine Total Return Bond Fund
+129,VANGUARD HIGH-YIELD TAX-EXEMPT FUND
+130,VANGUARD EXPLORER FUND
+131,Altaba Inc.
+132,JNL/Mellon S&P 500 Index Fund
+133,Eaton Vance Atlanta Capital SMID-Cap Fund
+134,Growth Fund
+135,LVIP SSGA S&P 500 Index Fund
+136,"Invesco QQQ Trust, Series 1"
+137,iShares 3-7 Year Treasury Bond ETF
+138,Fidelity SAI U.S. Large Cap Index Fund
+139,PIMCO Short Asset Portfolio
+140,Fidelity Series Stock Selector Large Cap Value Fund
+141,VIP Contrafund Portfolio
+142,Fidelity Contrafund K6
+143,"Templeton Growth Fund, Inc."
+144,VanEck Vectors Gold Miners ETF
+145,JPMorgan Strategic Income Opportunities Fund
+146,Federated Strategic Value Dividend Fund
+147,Capital World Growth & Income Fund
+148,VANGUARD INSTITUTIONAL INTERMEDIATE-TERM BOND FUND
+149,Baird Core Plus Bond Fund
+150,The Energy Select Sector SPDR Fund
+151,iShares Russell 2000 Growth ETF
+152,PIMCO Long Duration Credit Bond Portfolio
+153,VANGUARD TOTAL BOND MARKET INDEX FUND
+154,Income Fund
+155,VANGUARD CALIFORNIA INTERMEDIATE-TERM TAX-EXEMPT FUND
+156,Fidelity Advisor Strategic Income Fund
+157,JPMorgan U.S. Equity Fund
+158,Fidelity Investment Grade Bond Central Fund
+159,Schwab 1000 Index Fund
+160,EQ/500 Managed Volatility Portfolio
+161,Schwab U.S. Large-Cap ETF
+162,iShares MSCI ACWI ETF
+163,Bridge Builder International Equity Fund
+164,VANGUARD INSTITUTIONAL INTERMEDIATE-TERM BOND FUND
+165,The Utilities Select Sector SPDR Fund
+166,The Consumer Staples Select Sector SPDR Fund
+167,American Funds Growth Portfolio
+168,Franklin California Tax-Free Income Fund
+169,VANGUARD INFORMATION TECHNOLOGY INDEX FUND
+170,VANGUARD EXTENDED MARKET INDEX FUND
+171,VANGUARD FTSE ALL-WORLD EX-US INDEX FUND
+172,iShares Russell Mid-Cap ETF
+173,iShares Russell 1000 Growth ETF
+174,Fidelity Total Market Index Fund
+175,College Retirement Equities Fund - Equity Index Account
+176,SPDR(R) Bloomberg Barclays 1-3 Month T-Bill ETF
+177,iShares Edge MSCI Min Vol USA ETF
+178,BlackRock Total Return Fund
+179,VANGUARD INTERNATIONAL VALUE FUND
+180,U.S. SMALL CAP VALUE PORTFOLIO
+181,iShares MSCI EAFE ETF
+182,VANGUARD SMALL-CAP GROWTH INDEX FUND
+183,VANGUARD U.S. GROWTH FUND
+184,PGIM High Yield Fund
+185,"T. Rowe Price Small-Cap Stock Fund, Inc."
+186,VANGUARD SHORT-TERM CORPORATE BOND INDEX FUND
+187,PGIM Core Ultra Short Bond Fund
+188,MainStay Large Cap Growth Fund
+189,Loomis Sayles Bond Fund
+190,AST Balanced Asset Allocation Portfolio
+191,VANGUARD HEALTH CARE INDEX FUND
+192,Templeton Global Bond Fund
+193,Loomis Sayles Growth Fund
+194,VANGUARD MID-CAP INDEX FUND
+195,Growth Fund of America
+196,Western Asset Core Bond Fund
+197,DFA REAL ESTATE SECURITIES PORTFOLIO
+198,GMO Benchmark-Free Allocation Fund
+199,VANGUARD TOTAL BOND MARKET II INDEX FUND
+200,VANGUARD TOTAL BOND MARKET INDEX FUND
+201,American Balanced Fund
+202,Fidelity Magellan Fund
+203,SAI Fidelity Core Income Fund
+204,U.S. Targeted Value Portfolio
+205,Franklin Growth Fund
+206,Fidelity 500 Index Fund
+207,Bond Fund of America
+208,Diversified International Fund
+209,T. Rowe Price Emerging Markets Stock Fund
+210,Growth-Income Fund
+211,Fidelity Diversified International Fund
+212,Fidelity U.S. Bond Index Fund
+213,T. Rowe Price Retirement 2025 Fund
+214,Invesco S&P 500 Equal Weight ETF
+215,Guggenheim Total Return Bond Fund
+216,Portfolio Optimization Moderate Portfolio
+217,Schwab International Equity ETF
+218,VANGUARD TARGET RETIREMENT 2015 FUND
+219,MFS Institutional International Equity Fund
+220,American Funds Fundamental Investors
+221,iShares S&P 500 Value ETF
+222,iShares Select Dividend ETF
+223,LORD ABBETT BOND DEBENTURE FUND INC
+224,iShares 1-3 Year Treasury Bond ETF
+225,SIIT WORLD EQUITY EX-US FUND
+226,Large Cap Index Master Portfolio
+227,International Growth and Income Fund
+228,Fidelity Series Emerging Markets Opportunities Fund
+229,VANGUARD GNMA FUND
+230,Parnassus Core Equity Fund
+231,VANGUARD INSTITUTIONAL TOTAL STOCK MARKET INDEX FUND
+232,Strategic Equity Allocation Trust
+233,PIMCO High Yield Fund
+234,Invesco Oppenheimer Main Street Fund
+235,U.S. CORE EQUITY 2 PORTFOLIO
+236,College Retirement Equities Fund - Bond Market Account
+237,MFS Research International Fund
+238,Income Fund of America
+239,Oakmark Equity and Income Fund
+240,iShares TIPS Bond ETF
+241,VANGUARD SHORT-TERM INFLATION-PROTECTED SECURITIES INDEX FUND
+242,MFS Value Fund
+243,VANGUARD TARGET RETIREMENT 2020 FUND
+244,iShares Russell Mid-Cap Value ETF
+245,Fidelity Series Global Ex U.S. Index Fund
+246,Victory Sycamore Established Value Fund
+247,VANGUARD INSTITUTIONAL TARGET RETIREMENT 2045 FUND
+248,VANGUARD MID-CAP GROWTH INDEX FUND
+249,VANGUARD INTERMEDIATE-TERM TAX-EXEMPT FUND
+250,VANGUARD INSTITUTIONAL TARGET RETIREMENT 2040 FUND
+251,Columbia Contrarian Core Fund
+252,JPMorgan Equity Income Fund
+253,VANGUARD TOTAL WORLD STOCK INDEX FUND
+254,Fidelity Series Large Cap Stock Fund
+255,Fidelity Freedom 2050 Fund
+256,VANGUARD TARGET RETIREMENT 2050 FUND
+257,VANGUARD LONG-TERM TAX-EXEMPT FUND
+258,SIX CIRCLES U.S. UNCONSTRAINED EQUITY FUND
+259,First Trust Value Line Dividend Index Fund
+260,PRIMECAP Odyssey Aggressive Growth Fund
+261,T. Rowe Price Retirement 2040 Fund
+262,"T. Rowe Price Health Sciences Fund, Inc."
+263,Washington Mutual Investors Fund
+264,VANGUARD INFLATION-PROTECTED SECURITIES FUND
+265,iShares Core MSCI Total International Stock ETF
+266,The Health Care Select Sector SPDR Fund
+267,Brighthouse Balanced Plus Portfolio
+268,iShares 7-10 Year Treasury Bond ETF
+269,Bridge Builder Core Bond Fund
+270,iShares Core S&P Mid-Cap ETF
+271,VANGUARD TARGET RETIREMENT 2030 FUND
+272,VANGUARD PRIMECAP CORE FUND
+273,VANGUARD TARGET RETIREMENT 2055 FUND
+274,AST Prudential Growth Allocation Portfolio
+275,VANGUARD WELLESLEY INCOME FUND
+276,VIP INDEX 500 PORTFOLIO
+277,Invesco Diversified Dividend Fund
+278,Invesco High Yield Municipal Fund
+279,Fidelity Series Bond Index Fund
+280,BlackRock Strategic Municipal Opportunities Fund
+281,Thornburg Investment Income Builder Fund
+282,College Retirement Equities Fund - Stock Account
+283,VANGUARD INTERMEDIATE-TERM CORPORATE BOND INDEX FUND
+284,Fidelity Series International Growth Fund
+285,Schwab U.S. Small-Cap ETF
+286,THE U.S. LARGE CAP VALUE SERIES
+287,PRIMECAP Odyssey Stock Fund
+288,Nuveen Intermediate Duration Municipal Bond Fund
+289,THE HARTFORD DIVIDEND AND GROWTH FUND
+290,Invesco Oppenheimer Developing Markets Fund
+291,VANGUARD HEALTH CARE FUND
+292,U.S. CORE EQUITY 1 PORTFOLIO
+293,T. Rowe Price Equity Index 500 Fund
+294,ClearBridge Large Cap Growth Fund
+295,WCM Focused International Growth Fund
+296,T. Rowe Price Retirement 2045 Fund
+297,MidCap Fund
+298,Harbor Capital Appreciation Fund
+299,VANGUARD GROWTH INDEX FUND
+300,VANGUARD INSTITUTIONAL TARGET RETIREMENT 2015 FUND
+301,Oakmark Fund
+302,"T. Rowe Price Capital Appreciation Fund, Inc."
+303,BlackRock Multi-Asset Income Portfolio
+304,iShares MSCI Brazil ETF
+305,
+306,"T. Rowe Price Dividend Growth Fund, Inc."
+307,JPMorgan Managed Income Fund
+308,FIDELITY CONSERVATIVE INCOME BOND FUND
+309,Schwab S&P 500 Index Fund
+310,VANGUARD LIMITED-TERM TAX-EXEMPT FUND
+311,iShares Floating Rate Bond ETF
+312,iShares Russell 2000 ETF
+313,Nuveen High Yield Municipal Bond Fund
+314,VANGUARD INTERMEDIATE-TERM BOND INDEX FUND
+315,International Growth Fund
+316,iShares Core S&P Total U.S. Stock Market ETF
+317,MainStay MacKay High Yield Corporate Bond Fund
+318,Ultra Fund
+319,Dodge & Cox Balanced Fund
+320,Fidelity SAI U.S. Quality Index Fund
+321,Franklin Mutual Global Discovery Fund
+322,MassMutual Select Mid Cap Growth Fund
+323,Fidelity Series International Value Fund
+324,VANGUARD REAL ESTATE INDEX FUND
+325,AST Capital Growth Asset Allocation Portfolio
+326,VANGUARD INSTITUTIONAL TARGET RETIREMENT 2055 FUND
+327,"T. Rowe Price Growth Stock Fund, Inc."
+328,iShares Core U.S. Aggregate Bond ETF
+329,iShares iBoxx $ High Yield Corporate Bond ETF
+330,"T. Rowe Price Small-Cap Value Fund, Inc."
+331,American Funds Growth and Income Portfolio
+332,PIMCO All Asset Fund
+333,Bridge Builder Large Cap Value Fund
+334,Disciplined Value Mid Cap Fund
+335,INTERNATIONAL CORE EQUITY PORTFOLIO
+336,iShares J.P. Morgan USD Emerging Markets Bond ETF
+337,Multimanager Lifestyle Balanced Portfolio
+338,EMERGING MARKETS CORE EQUITY PORTFOLIO
+339,iShares Russell 1000 Value ETF
+340,College Retirement Equities Fund - Social Choice Account
+341,American Funds Global Balanced Fund
+342,Fidelity Series Intrinsic Opportunities Fund
+343,"BlackRock Global Allocation Fund, Inc."
+344,T. Rowe Price Retirement 2035 Fund
+345,Dodge & Cox Income Fund
+346,American Funds 2025 Target Date Retirement Fund
+347,TIAA-CREF Equity Index Fund
+348,DFA Global Real Estate Securities Portfolio
+349,SPDR S&P MidCap 400 ETF Trust
+350,Calamos Market Neutral Income Fund
+351,STRATEGIC ADVISERS INTERNATIONAL FUND
+352,Fidelity Series Inflation-Protected Bond Index Fund
+353,American Funds 2045 Target Date Retirement Fund
+354,DFA Investment Grade Portfolio
+355,Strategic Advisers Fidelity U.S. Total Stock Fund
+356,T. Rowe Price International Value Equity Fund
+357,Invesco Oppenheimer International Growth Fund
+358,Fidelity Series Overseas Fund
+359,TIAA-CREF International Equity Index Fund
+360,Goldman Sachs High Yield Municipal Fund
+361,TAX-MANAGED GROWTH PORTFOLIO
+362,Intermediate Bond Fund of America
+363,Tax Exempt Bond Fund of America
+364,Dodge & Cox International Stock Fund
+365,
+366,U.S. SMALL CAP PORTFOLIO
+367,Fidelity Blue Chip Growth Fund
+368,VANGUARD GROWTH AND INCOME FUND
+369,Columbia Dividend Income Fund
+370,Old Westbury Large Cap Strategies Fund
+371,JNL/WMC Balanced Fund
+372,SPDR(R) S&P(R) Dividend ETF
+373,VANGUARD TOTAL INTERNATIONAL BOND INDEX FUND
+374,JPMorgan Ultra-Short Income ETF
+375,iShares S&P 500 Growth ETF
+376,iShares Core S&P Small-Cap ETF
+377,VANGUARD TOTAL BOND MARKET II INDEX FUND
+378,VANGUARD TARGET RETIREMENT 2035 FUND
+379,AMCAP Fund
+380,PIMCO Short-Term Floating NAV Portfolio III
+381,Special Mid Cap Value Fund
+382,VANGUARD TARGET RETIREMENT INCOME FUND
+383,TIAA-CREF Bond Index Fund
+384,The Financial Select Sector SPDR Fund
+385,VANGUARD INSTITUTIONAL TARGET RETIREMENT 2020 FUND
+386,VANGUARD DIVIDEND GROWTH FUND
+387,VANGUARD VALUE INDEX FUND
+388,American Funds 2035 Target Date Retirement Fund
+389,Investment Co of America
+390,Invesco Comstock Fund
+391,iShares S&P 500 Index Fund
+392,PIMCO Enhanced Short Maturity Active Exchange-Traded Fund
+393,Neuberger Berman Genesis Fund
+394,Fidelity Contrafund
+395,Fidelity SAI Total Bond Fund
+396,PIMCO Real Return Fund
+397,Variable Portfolio - Managed Volatility Growth Fund
+398,iShares Russell 1000 ETF
+399,JPMorgan Value Advantage Fund
+400,iShares Core MSCI EAFE ETF
+401,EMERGING MARKETS VALUE PORTFOLIO
+402,VANGUARD WELLESLEY INCOME FUND
+403,VANGUARD DEVELOPED MARKETS INDEX FUND
+404,VANGUARD INTERMEDIATE-TERM INVESTMENT-GRADE FUND
+405,Fidelity Asset Manager 50%
+406,Franklin Income Fund
+407,BlackRock Strategic Income Opportunities Portfolio
+408,VANGUARD TARGET RETIREMENT 2045 FUND
+409,T. Rowe Price Retirement 2020 Fund
+410,Fidelity Series Total Market Index Fund
+411,iShares Edge MSCI Min Vol EAFE ETF
+412,DFA INTERNATIONAL SMALL CAP VALUE PORTFOLIO
+413,Putnam Equity Income Fund
+414,JNL/T. Rowe Price Established Growth Fund
+415,Franklin Rising Dividends Fund
+416,Invesco American Franchise Fund
+417,VANGUARD SHORT-TERM BOND INDEX FUND
+418,Schwab U.S. Large-Cap Growth ETF
+419,JPMorgan Core Bond Fund
+420,iShares Preferred and Income Securities ETF
+421,Bridge Builder Core Plus Bond Fund
+422,iShares 20+ Year Treasury Bond ETF
+423,VANGUARD WINDSOR II FUND
+424,Fidelity Series Investment Grade Bond Fund
+425,PIMCO Income Fund
+426,VANGUARD 500 INDEX FUND
+427,VANGUARD INSTITUTIONAL TARGET RETIREMENT 2035 FUND
+428,Franklin Dynatech Fund
+429,VANGUARD LONG-TERM BOND INDEX FUND
+430,Fidelity Series Growth Company Fund
+431,DoubleLine Core Fixed Income Fund
+432,Bond Fund
+433,First Eagle Overseas Fund
+434,VANGUARD CAPITAL OPPORTUNITY FUND
+435,iShares Core MSCI Emerging Markets ETF
+436,Invesco S&P 500 Low Volatility ETF
+437,JPMorgan Income Builder Fund
+438,STRATEGIC ADVISERS CORE INCOME FUND
+439,iShares Russell 3000 ETF
+440,VANGUARD SHORT-TERM TAX-EXEMPT FUND
+441,Ultra Short Income Portfolio
+442,Fidelity Mid Cap Index Fund
+443,AST T. Rowe Price Asset Allocation Portfolio
+444,U.S. Government Securities Fund
+445,Fidelity International Index Fund
+446,VANGUARD DIVIDEND APPRECIATION INDEX FUND
+447,"T. Rowe Price Equity Income Fund, Inc."
+448,VANGUARD STAR FUND
+449,Western Asset Core Plus Bond Fund
+450,SMALLCAP World Fund Inc
+451,American Mutual Fund
+452,iShares Edge MSCI USA Momentum Factor ETF
+453,MFS International Growth Fund

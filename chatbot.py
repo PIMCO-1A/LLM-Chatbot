@@ -80,10 +80,10 @@ API_KEY = os.getenv("OPENAI_API_KEY")
 openai.api_key = API_KEY
 
 # db path
-db_path = Path("data/sec_nport_data_combined.db")
+db_path = Path("data/sec_nport_data_large.db")
 
 # Load the schema
-schema_file_path = "data/data_schema2.txt"
+schema_file_path = "data/data_schema.txt"
 schema = load_schema(schema_file_path)
 
 # app title
@@ -149,32 +149,18 @@ example_prompts_and_queries = {
             "schema_links": "FUND_REPORTED_INFO.NET_ASSETS, FUND_REPORTED_INFO.YEAR, FUND_REPORTED_INFO.QUARTER, 2023, 2"
         },
         {
-            "question": "Find the maturity dates for repurchase agreements in 2022 Q3.",
+            "question": "List the funds with positive net asset growth in Q4 2023.",
             "query": """
-            SELECT MATURITY_DATE
-            FROM REPURCHASE_AGREEMENT
-            WHERE YEAR = 2022 AND QUARTER = 3;
+            SELECT SERIES_NAME
+            FROM FUND_REPORTED_INFO
+            WHERE NET_ASSETS > 0 AND YEAR = 2023 AND QUARTER = 4;
             """,
             "reasoning": """
-            Let's think step by step. The SQL query for the question "Find the maturity dates for repurchase agreements in 2022 Q3" needs these tables = [REPURCHASE_AGREEMENT], so we don't need JOIN.
-            Plus, it doesn't require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
-            So, we don't need JOIN and don't need nested queries, then the SQL query can be classified as "EASY".
+            Let’s think step by step. The SQL query for the question "List the funds with positive net asset growth in Q4 2023." needs these tables = [FUND_REPORTED_INFO], so we don't need JOIN.
+            Plus, it doesn’t require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
+            So, we don’t need JOIN and don’t need nested queries, then the SQL query can be classified as "EASY".
             """,
-            "schema_links": "REPURCHASE_AGREEMENT.MATURITY_DATE, REPURCHASE_AGREEMENT.YEAR, REPURCHASE_AGREEMENT.QUARTER, 2022, 3"
-        },
-        {
-            "question": "What is the currency value of holdings for Tennant Co in Q4 2022?",
-            "query": """
-            SELECT CURRENCY_VALUE
-            FROM FUND_REPORTED_HOLDING
-            WHERE ISSUER_NAME = 'Tennant Co' AND YEAR = 2022 AND QUARTER = 4;
-            """,
-            "reasoning": """
-            Let's think step by step. The SQL query for the question "What is the currency value of holdings for Tennant Co in Q4 2022?" needs these tables = [FUND_REPORTED_HOLDING], so we don't need JOIN.
-            Plus, it doesn't require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
-            So, we don't need JOIN and don't need nested queries, then the SQL query can be classified as "EASY".
-            """,
-            "schema_links": "FUND_REPORTED_HOLDING.CURRENCY_VALUE, FUND_REPORTED_HOLDING.ISSUER_NAME, FUND_REPORTED_HOLDING.YEAR, FUND_REPORTED_HOLDING.QUARTER, Tennant Co, 2022, 4"
+            "schema_links": "FUND_REPORTED_INFO.SERIES_NAME, FUND_REPORTED_INFO.NET_ASSETS, FUND_REPORTED_INFO.YEAR, FUND_REPORTED_INFO.QUARTER, 0, 2023, 4"
         }
     ],
     "medium": [
@@ -413,31 +399,30 @@ example_prompts_and_queries = {
             ORDER BY QUARTER;
             """,
             "reasoning": """
-            Let's think step by step. The SQL query for the question "Find the quarterly change in net assets for funds with the largest liabilities-to-assets ratio in 2023?" needs these tables = [FUND_REPORTED_INFO], so we need JOIN.
+            Let's think step by step. The SQL query for the question "Find the quarterly change in net assets for funds with the largest liabilities-to-assets ratio in 2023?" needs this table = [FUND_REPORTED_INFO], so we don't need JOIN.
             Plus, it requires nested queries with (ORDER BY, LIMIT), and we need the answer to the questions = [“What are the top 5 funds by liabilities-to-assets ratio in 2023?”].
             So, we need JOIN and need nested queries, then the SQL query can be classified as "HARD".
             """,
             "schema_links": "FUND_REPORTED_INFO.SERIES_NAME, FUND_REPORTED_INFO.NET_ASSETS, FUND_REPORTED_INFO.QUARTER, FUND_REPORTED_INFO.YEAR, FUND_REPORTED_INFO.TOTAL_LIABILITIES, FUND_REPORTED_INFO.TOTAL_ASSETS, 2023"
         },
         {
-            "question": "List the funds with cash holdings greater than the average cash holdings in Q2 2023.",
+            "question": "List the funds with non-cash collateral where total assets are less than the sum of values from index components in Q2 2024.",
             "query": """
             SELECT SERIES_NAME
             FROM FUND_REPORTED_INFO
-            WHERE CASH_NOT_RPTD_IN_C_OR_D > (
-                SELECT AVG(CASH_NOT_RPTD_IN_C_OR_D)
-                FROM FUND_REPORTED_INFO
-                WHERE YEAR = 2023 AND QUARTER = 2
+            WHERE IS_NON_CASH_COLLATERAL = 'Y' AND TOTAL_ASSETS < (
+                SELECT SUM(dric.VALUE)
+                FROM DESC_REF_INDEX_COMPONENT dric
+                WHERE dric.YEAR = 2024 AND dric.QUARTER = 2
             )
-            AND YEAR = 2023 AND QUARTER = 2;
+            AND YEAR = 2024 AND QUARTER = 2;
             """,
             "reasoning": """
-            Let's think step by step. The SQL query for the question "List the funds with cash holdings greater than the average cash holdings in Q2 2023" needs this table = [FUND_REPORTED_INFO], so we don't need JOINs.
-            Plus, it requires a nested query with AVG, and we need the answer to the question = ["What is the average cash holdings for all funds in Q2 2023?"].
+            Let's think step by step. The SQL query for the question "List the funds with non-cash collateral where total assets are less than the sum of values from index components in Q2 2024" needs this table = [FUND_REPORTED_INFO], so we don't need JOINs. 
+            Plus, it requires a nested query with SUM, and we need the answer to the question = ["What is the sum of values from index components in Q2 2024?"]. 
             So, we don't need JOINs but need a nested query, then the SQL query can be classified as "HARD."
             """,
-            "schema_links": "FUND_REPORTED_INFO.CASH_NOT_RPTD_IN_C_OR_D, FUND_REPORTED_INFO.SERIES_NAME, FUND_REPORTED_INFO.YEAR, FUND_REPORTED_INFO.QUARTER, 2023, 2"
-        },
+            "schema_links": "UND_REPORTED_INFO.SERIES_NAME, FUND_REPORTED_INFO.IS_NON_CASH_COLLATERAL, FUND_REPORTED_INFO.TOTAL_ASSETS, DESC_REF_INDEX_COMPONENT.VALUE, DESC_REF_INDEX_COMPONENT.YEAR, DESC_REF_INDEX_COMPONENT.QUARTER, Y, 2024, 2"},
         {
             "question": "Which funds have derivatives with a counterparty LEI matching a repurchase counterparty's LEI, and the total unrealized appreciation for those derivatives exceeds $1 million in Q2 2024?",
             "query": """
@@ -512,6 +497,7 @@ def execute_sql_query(query, db_path):
             - Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
             - All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)\
             - Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
+            - If you need to join two tables that do not have the same primary key, find an intermediate table that has both primary keys.
         5. Correct the Query:
         - Modify the SQL query to address the identified issues, ensuring it correctly fetches the requested data according to the database schema and query requirements.
 
@@ -621,6 +607,7 @@ if prompt := st.chat_input("Enter your question about the database:"):
     2. Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
     3. All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
     4. Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
+    5. If you need to join two tables that do not have the same primary key, find an intermediate table that has both primary keys.
 
     **Schema for Output:**
     - This includes the reasonings schema above as an element
