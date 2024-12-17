@@ -80,7 +80,7 @@ API_KEY = os.getenv("OPENAI_API_KEY")
 openai.api_key = API_KEY
 
 # db path
-db_path = Path("data/sec_nport_data_combined.db")
+db_path = Path("data/sec_nport_data_large.db")
 
 # Load the schema
 schema_file_path = "data/data_schema2.txt"
@@ -149,32 +149,18 @@ example_prompts_and_queries = {
             "schema_links": "FUND_REPORTED_INFO.NET_ASSETS, FUND_REPORTED_INFO.YEAR, FUND_REPORTED_INFO.QUARTER, 2023, 2"
         },
         {
-            "question": "Find the maturity dates for repurchase agreements in 2022 Q3.",
+            "question": "List the funds with positive net asset growth in Q4 2023.",
             "query": """
-            SELECT MATURITY_DATE
-            FROM REPURCHASE_AGREEMENT
-            WHERE YEAR = 2022 AND QUARTER = 3;
+            SELECT SERIES_NAME
+            FROM FUND_REPORTED_INFO
+            WHERE NET_ASSETS > 0 AND YEAR = 2023 AND QUARTER = 4;
             """,
             "reasoning": """
-            Let's think step by step. The SQL query for the question "Find the maturity dates for repurchase agreements in 2022 Q3" needs these tables = [REPURCHASE_AGREEMENT], so we don't need JOIN.
-            Plus, it doesn't require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
-            So, we don't need JOIN and don't need nested queries, then the SQL query can be classified as "EASY".
+            Let’s think step by step. The SQL query for the question "List the funds with positive net asset growth in Q4 2023." needs these tables = [FUND_REPORTED_INFO], so we don't need JOIN.
+            Plus, it doesn’t require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
+            So, we don’t need JOIN and don’t need nested queries, then the SQL query can be classified as "EASY".
             """,
-            "schema_links": "REPURCHASE_AGREEMENT.MATURITY_DATE, REPURCHASE_AGREEMENT.YEAR, REPURCHASE_AGREEMENT.QUARTER, 2022, 3"
-        },
-        {
-            "question": "What is the currency value of holdings for Tennant Co in Q4 2022?",
-            "query": """
-            SELECT CURRENCY_VALUE
-            FROM FUND_REPORTED_HOLDING
-            WHERE ISSUER_NAME = 'Tennant Co' AND YEAR = 2022 AND QUARTER = 4;
-            """,
-            "reasoning": """
-            Let's think step by step. The SQL query for the question "What is the currency value of holdings for Tennant Co in Q4 2022?" needs these tables = [FUND_REPORTED_HOLDING], so we don't need JOIN.
-            Plus, it doesn't require nested queries with (INTERSECT, UNION, EXCEPT, IN, NOT IN), and we need the answer to the questions = [""].
-            So, we don't need JOIN and don't need nested queries, then the SQL query can be classified as "EASY".
-            """,
-            "schema_links": "FUND_REPORTED_HOLDING.CURRENCY_VALUE, FUND_REPORTED_HOLDING.ISSUER_NAME, FUND_REPORTED_HOLDING.YEAR, FUND_REPORTED_HOLDING.QUARTER, Tennant Co, 2022, 4"
+            "schema_links": "FUND_REPORTED_INFO.SERIES_NAME, FUND_REPORTED_INFO.NET_ASSETS, FUND_REPORTED_INFO.YEAR, FUND_REPORTED_INFO.QUARTER, 0, 2023, 4"
         }
     ],
     "medium": [
@@ -537,10 +523,10 @@ def execute_sql_query(query, db_path):
                 response_json = json.loads(fixing_response)
                 fixed_sql_query = response_json.get('generated_sql_query', '').strip()
                 fixed_reasoning_list = response_json.get('reasonings', [])
-                fixed_reasoning = "\n\n".join(f"- **{type(r).__name__}**: {r}" for r in reasoning_list)
+                fixed_reasoning = "\n\n".join(f"- **{type(r).__name__}**: {r}" for r in fixed_reasoning_list)
 
                 # Return the fixed query and reasoning
-                return fixed_query, fixed_reasoning
+                return fixed_sql_query, fixed_reasoning
             except json.JSONDecodeError:
                 st.error("Error decoding response from OpenAI. Please try again.")
 

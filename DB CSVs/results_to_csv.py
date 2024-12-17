@@ -6,17 +6,9 @@ db_path = '../data/sec_nport_data_large.db'
 
 # SQL query: CHANGE THIS TO YOUR QUERY
 sql_query = """
-SELECT fri.SERIES_NAME
-FROM FUND_REPORTED_INFO fri
-WHERE EXISTS (
-    SELECT 1
-    FROM FWD_FOREIGNCUR_CONTRACT_SWAP fcs
-    JOIN FUND_REPORTED_HOLDING frh ON fcs.HOLDING_ID = frh.HOLDING_ID
-    WHERE fri.ACCESSION_NUMBER = frh.ACCESSION_NUMBER
-    AND fcs.DESC_CURRENCY_SOLD = 'USD'
-    AND fcs.YEAR = 2020
-)
-AND fri.YEAR = 2020;
+SELECT MATURITY_DATE
+FROM REPURCHASE_AGREEMENT
+WHERE YEAR = 2020 AND QUARTER = 1;
 """
 
 # Connect to the db
@@ -29,6 +21,6 @@ df = pd.read_sql_query(sql_query, conn)
 conn.close()
 
 # Save the df to a csv file
-df.to_csv('Hard14.csv', index=False)
+df.to_csv('Easy10.csv', index=False)
 
 print("CSV file has been saved.")

@@ -124,7 +124,7 @@ def call_openai_model(system_prompt, user_prompt, model_name, client):
 
     except Exception:
         exc_type, exc_value, exc_traceback = sys.exc_info()
-        msg = f"Caught an exception {exc_type} in '{context.name}': {exc_value}"
+        msg = f"Caught an exception {exc_type}': {exc_value}"
         print(msg)
         traceback.print_tb(exc_traceback)
 
@@ -411,6 +411,15 @@ def calculate_similarity(ast1, ast2):
 
     return matches / max_length if max_length > 0 else 1.0
 
+easy6 = "What is the currency value of holdings for Tennant Co in Q4 2022?"
+easy6_gold = '''SELECT SUM(CURRENCY_VALUE)
+FROM FUND_REPORTED_HOLDING
+WHERE ISSUER_NAME LIKE '%Tennant Co%' AND YEAR = 2022 AND QUARTER = 4;'''
+easy6_model = '''SELECT SUM(CURRENCY_VALUE) AS TotalCurrencyValue
+FROM FUND_REPORTED_HOLDING
+WHERE ISSUER_NAME LIKE '%Tennant Co%' AND YEAR = 2022 AND QUARTER = 4;'''
+easy6_accuracy = are_queries_ast_similar(easy6_gold, easy6_model)
+
 easy7 = "Find the total currency value of holdings for each asset category in Q4 2022."
 easy7_gold = '''SELECT ASSET_CAT, SUM(CURRENCY_VALUE) AS TotalCurrencyValue
 FROM FUND_REPORTED_HOLDING
@@ -440,14 +449,13 @@ FROM INTEREST_RATE_RISK
 WHERE YEAR = 2022 AND QUARTER = 4;'''
 easy9_accuracy = are_queries_ast_similar(easy9_gold,easy9_model)
 
-easy10 = "List the funds with positive net asset growth in Q4 2023."
-easy10_gold = '''SELECT SERIES_NAME
-FROM FUND_REPORTED_INFO
-WHERE NET_ASSETS > 0 AND YEAR = 2023 AND QUARTER = 4;'''
-easy10_model = '''SELECT fri1.SERIES_NAME
-FROM FUND_REPORTED_INFO fri1
-JOIN FUND_REPORTED_INFO fri2 ON fri1.SERIES_ID = fri2.SERIES_ID AND fri1.YEAR = fri2.YEAR AND fri1.QUARTER = 4 AND fri2.QUARTER = 3
-WHERE fri1.YEAR = 2023 AND fri2.YEAR = 2023 AND fri1.NET_ASSETS > fri2.NET_ASSETS;'''
+easy10 = "Find the maturity dates for repurchase agreements in 2022 Q3."
+easy10_gold = '''SELECT MATURITY_DATE
+FROM REPURCHASE_AGREEMENT
+WHERE YEAR = 2022 AND QUARTER = 3;'''
+easy10_model = '''SELECT MATURITY_DATE
+FROM REPURCHASE_AGREEMENT
+WHERE YEAR = 2022 AND QUARTER = 3;'''
 easy10_accuracy = are_queries_ast_similar(easy10_gold,easy10_model)
 
 easy11 = "What are the top 5 funds by net assets for Q2 2023?"
@@ -773,9 +781,9 @@ AND irr.YEAR = 2023 AND irr.QUARTER = 3;
 '''
 hard15_accuracy = are_queries_ast_similar(hard15_gold,hard15_model)
 
-questions = [easy7, easy8, easy9, easy10, easy11, easy12, easy13, medium8, medium9, medium10, medium11, medium12, medium13, hard8, hard11, hard13, hard15]
-gold = [easy7_gold, easy8_gold, easy9_gold, easy10_gold, easy11_gold, easy12_gold, easy13_gold, medium8_gold, medium9_gold, medium10_gold, medium11_gold, medium12_gold, medium13_gold, hard8_gold, hard11_gold, hard13_gold, hard15_gold]
-model = [easy7_model, easy8_model, easy9_model, easy10_model, easy11_model, easy12_model, easy13_model, medium8_model, medium9_model, medium10_model, medium11_model, medium12_model, medium13_model, hard8_model, hard11_model, hard13_model, hard15_model]
+questions = [easy6, easy7, easy8, easy9, easy10, easy11, easy12, easy13, medium8, medium9, medium10, medium11, medium12, medium13, hard8, hard11, hard13, hard15]
+gold = [easy6_gold, easy7_gold, easy8_gold, easy9_gold, easy10_gold, easy11_gold, easy12_gold, easy13_gold, medium8_gold, medium9_gold, medium10_gold, medium11_gold, medium12_gold, medium13_gold, hard8_gold, hard11_gold, hard13_gold, hard15_gold]
+model = [easy6_model, easy7_model, easy8_model, easy9_model, easy10_model, easy11_model, easy12_model, easy13_model, medium8_model, medium9_model, medium10_model, medium11_model, medium12_model, medium13_model, hard8_model, hard11_model, hard13_model, hard15_model]
 
 def df_accuracy(path_gold, path_model, mapping_list):
     """
@@ -837,12 +845,12 @@ def df_accuracy(path_gold, path_model, mapping_list):
 easy_sql_accuracy = [easy7_accuracy, easy8_accuracy, easy9_accuracy, easy10_accuracy, easy11_accuracy, easy12_accuracy, easy13_accuracy, medium8_accuracy, medium9_accuracy, medium10_accuracy, medium11_accuracy, medium12_accuracy, medium13_accuracy, hard8_accuracy, hard11_accuracy, hard13_accuracy, hard15_accuracy]
 easy_csv_accuracy = []
 def easy_accuracy(easy_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, easy_sql_accuracy):
-    for i in range(7, 13):
+    for i in range(6, 13):
         path_gold = f"DB CSVs/Easy{i}.csv"
         path_model = f"Model CSVs/Easy{i}.csv"
 
-        user_prompt = get_user_prompt_for_question(gold[i-7],
-                                                    model[i-7],
+        user_prompt = get_user_prompt_for_question(gold[i-6],
+                                                    model[i-6],
                                                     input_table_schema_for_db,
                                                     complete_user_prompts)
 
