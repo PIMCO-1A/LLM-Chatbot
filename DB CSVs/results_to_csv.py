@@ -6,9 +6,14 @@ db_path = '../data/sec_nport_data_large.db'
 
 # SQL query: CHANGE THIS TO YOUR QUERY
 sql_query = """
-SELECT MATURITY_DATE
-FROM REPURCHASE_AGREEMENT
-WHERE YEAR = 2020 AND QUARTER = 1;
+SELECT fri.SERIES_NAME, SUM(ffnc.UNREALIZED_APPRECIATION) AS UnrealizedAppreciation
+FROM FUND_REPORTED_INFO fri
+JOIN FUND_REPORTED_HOLDING frh ON fri.ACCESSION_NUMBER = frh.ACCESSION_NUMBER
+JOIN FUT_FWD_NONFOREIGNCUR_CONTRACT ffnc ON frh.HOLDING_ID = ffnc.HOLDING_ID
+WHERE fri.YEAR = 2019 AND fri.QUARTER = 4
+GROUP BY fri.SERIES_NAME
+ORDER BY UnrealizedAppreciation DESC
+LIMIT 4;
 """
 
 # Connect to the db
@@ -21,6 +26,6 @@ df = pd.read_sql_query(sql_query, conn)
 conn.close()
 
 # Save the df to a csv file
-df.to_csv('Easy10.csv', index=False)
+df.to_csv('Medium8.csv', index=False)
 
 print("CSV file has been saved.")

@@ -498,6 +498,7 @@ def execute_sql_query(query, db_path):
             - Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
             - All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)\
             - Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
+            - If you need to join two tables that do not have the same primary key, find an intermediate table that has both primary keys.
         5. Correct the Query:
         - Modify the SQL query to address the identified issues, ensuring it correctly fetches the requested data according to the database schema and query requirements.
 
@@ -607,6 +608,7 @@ if prompt := st.chat_input("Enter your question about the database:"):
     2. Use a `LIKE` clause for partial matching of `ISSUER_NAME` (e.g., WHERE ISSUER_NAME LIKE '%value%').
     3. All queries must be valid to access a SQLite database (e.g., use the command LIMIT instead of FETCH)
     4. Use "Y" and "N" instead of "YES" and "NO" in the SQL query (e.g., WHERE IS_DEFAULT = 'Y' instead of WHERE IS_DEFAULT = 'YES').
+    5. If you need to join two tables that do not have the same primary key, find an intermediate table that has both primary keys.
 
     **Schema for Output:**
     - This includes the reasonings schema above as an element
@@ -678,19 +680,3 @@ if prompt := st.chat_input("Enter your question about the database:"):
                 st.error("Invalid SQL query generated. Please review.")
         except json.JSONDecodeError:
             st.error("Error decoding response from OpenAI. Please try again.")
-
-
-
-
-
-
-# {
-#             "question": " ",
-#             "query": """
-            
-#             """,
-#             "reasoning": """
-            
-#             """,
-#             "schema_links": " "
-#         }

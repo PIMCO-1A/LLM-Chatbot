@@ -492,21 +492,21 @@ GROUP BY SERIES_NAME;'''
 easy13_accuracy = are_queries_ast_similar(easy13_gold,easy13_model)
 
 medium8 = "Identify the top 4 funds by unrealized appreciation in derivative contracts for Q4 2019."
-medium8_gold = '''SELECT fri.SERIES_NAME, SUM(sowd.UNREALIZED_APPRECIATION) AS TotalUnrealizedAppreciation
-FROM SWAPTION_OPTION_WARNT_DERIV sowd
-JOIN FUND_REPORTED_HOLDING frh ON sowd.HOLDING_ID = frh.HOLDING_ID
-JOIN FUND_REPORTED_INFO fri ON frh.ACCESSION_NUMBER = fri.ACCESSION_NUMBER
-WHERE fri.YEAR = 2019 AND fri.QUARTER = 4
-GROUP BY fri.SERIES_NAME
-ORDER BY TotalUnrealizedAppreciation DESC
-LIMIT 4;'''
-medium8_model = '''SELECT fri.SERIES_NAME, SUM(ffnc.UNREALIZED_APPRECIATION) AS TotalUnrealizedAppreciation
+medium8_gold = '''SELECT fri.SERIES_NAME, SUM(ffnc.UNREALIZED_APPRECIATION) AS TotalUnrealizedAppreciation
 FROM FUND_REPORTED_INFO fri
 JOIN FUND_REPORTED_HOLDING frh ON fri.ACCESSION_NUMBER = frh.ACCESSION_NUMBER
 JOIN FUT_FWD_NONFOREIGNCUR_CONTRACT ffnc ON frh.HOLDING_ID = ffnc.HOLDING_ID
 WHERE fri.YEAR = 2019 AND fri.QUARTER = 4
 GROUP BY fri.SERIES_NAME
 ORDER BY TotalUnrealizedAppreciation DESC
+LIMIT 4;'''
+medium8_model = '''SELECT fri.SERIES_NAME, SUM(ffnc.UNREALIZED_APPRECIATION) AS UnrealizedAppreciation
+FROM FUND_REPORTED_INFO fri
+JOIN FUND_REPORTED_HOLDING frh ON fri.ACCESSION_NUMBER = frh.ACCESSION_NUMBER
+JOIN FUT_FWD_NONFOREIGNCUR_CONTRACT ffnc ON frh.HOLDING_ID = ffnc.HOLDING_ID
+WHERE fri.YEAR = 2019 AND fri.QUARTER = 4
+GROUP BY fri.SERIES_NAME
+ORDER BY UnrealizedAppreciation DESC
 LIMIT 4;'''
 medium8_accuracy = are_queries_ast_similar(medium8_gold,medium8_model)
 
@@ -526,7 +526,7 @@ GROUP BY FRI.SERIES_NAME, DRIC.CURRENCY_CODE;'''
 medium9_accuracy = are_queries_ast_similar(medium9_gold,medium9_model)
 
 medium10 = "Which funds reported interest rate risks with a 30-year DV01 greater than $10,000 in Q2 2022?"
-medium10_gold = '''SELECT fri.SERIES_NAME, irr.INTRST_RATE_CHANGE_30YR_DV01
+medium10_gold = '''SELECT fri.SERIES_NAME
 FROM FUND_REPORTED_INFO fri
 JOIN INTEREST_RATE_RISK irr ON fri.ACCESSION_NUMBER = irr.ACCESSION_NUMBER
 WHERE irr.INTRST_RATE_CHANGE_30YR_DV01 > 10000 AND irr.YEAR = 2022 AND irr.QUARTER = 2;'''
@@ -824,20 +824,19 @@ def df_accuracy(path_gold, path_model, mapping_list):
     elif len(df_model_filtered.columns) > len(df_gold_filtered.columns):
         df_model_filtered = df_model_filtered[df_gold_filtered.columns]
 
-    # Ensure rows are sorted for accurate comparison
-    df_gold_filtered = df_gold_filtered.sort_index().reset_index(drop=True)
-    df_model_filtered = df_model_filtered.sort_index().reset_index(drop=True)
-
-    # Ensure same number of rows
-    # if len(df_gold_filtered) != len(df_model_filtered):
-    #     raise ValueError("Mismatch in number of rows between gold and model data.")
-
     # # Replace NaN with a consistent value for comparison
     df_gold_filtered.fillna(value=np.nan, inplace=True)
     df_model_filtered.fillna(value=np.nan, inplace=True)
 
+    # Ensure rows are sorted for accurate comparison
+    # df_gold_filtered = df_gold_filtered.sort_index().reset_index(drop=True)
+    # df_model_filtered = df_model_filtered.sort_index().reset_index(drop=True)
+
+    df_gold_sorted = df_gold_filtered.sort_values(by=df_gold_filtered.columns.tolist()).reset_index(drop=True)
+    df_model_sorted = df_model_filtered.sort_values(by=df_model_filtered.columns.tolist()).reset_index(drop=True)
+
     # Compare rows and calculate accuracy
-    matches = (df_gold_filtered.values == df_model_filtered.values).all(axis=1)  # Row-wise match
+    matches = (df_gold_sorted.values == df_model_sorted.values).all(axis=1)  # Row-wise match
     accuracy = np.mean(matches)
 
     return accuracy
@@ -845,7 +844,7 @@ def df_accuracy(path_gold, path_model, mapping_list):
 easy_sql_accuracy = [easy7_accuracy, easy8_accuracy, easy9_accuracy, easy10_accuracy, easy11_accuracy, easy12_accuracy, easy13_accuracy, medium8_accuracy, medium9_accuracy, medium10_accuracy, medium11_accuracy, medium12_accuracy, medium13_accuracy, hard8_accuracy, hard11_accuracy, hard13_accuracy, hard15_accuracy]
 easy_csv_accuracy = []
 def easy_accuracy(easy_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, easy_sql_accuracy):
-    for i in range(6, 13):
+    for i in range(6, 14):
         path_gold = f"DB CSVs/Easy{i}.csv"
         path_model = f"Model CSVs/Easy{i}.csv"
 
@@ -876,17 +875,17 @@ def easy_accuracy(easy_csv_accuracy, gold, model, input_table_schema_for_db, com
     print("\nAccuracy for Easy CSVs: " + str(avg_easy_db_acc))
     print("Accuracy for Easy SQL Queries: " + str(avg_easy_sql_acc))
     print("Combined Accuracy for Easy: " + str(avg_combined_easy_acc) + "\n")
-    return avg_combined_easy_acc
+    return avg_combined_easy_acc, avg_easy_db_acc, avg_easy_sql_acc
 
 medium_sql_accuracy = [medium8_accuracy, medium9_accuracy, medium10_accuracy, medium11_accuracy, medium12_accuracy, medium13_accuracy]
 medium_csv_accuracy = []
 def medium_accuracy(med_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, med_sql_accuracy):
-    for i in range(8, 13):
+    for i in range(8, 14):
         path_gold = f"DB CSVs/Medium{i}.csv"
         path_model = f"Model CSVs/Medium{i}.csv"
 
-        user_prompt = get_user_prompt_for_question(gold[i-1],
-                                                    model[i-1],
+        user_prompt = get_user_prompt_for_question(gold[i],
+                                                    model[i],
                                                     input_table_schema_for_db,
                                                     complete_user_prompts)
 
@@ -903,7 +902,7 @@ def medium_accuracy(med_csv_accuracy, gold, model, input_table_schema_for_db, co
             # Handle any exception by setting accuracy to 0 and logging the error
             accuracy = 0
             med_csv_accuracy.append(accuracy)
-
+        
         print(f"Accuracy for Medium{i}: {accuracy:.2f}")
     
     avg_med_db_acc = round((sum(med_csv_accuracy) / len(med_csv_accuracy)), 2)
@@ -912,12 +911,12 @@ def medium_accuracy(med_csv_accuracy, gold, model, input_table_schema_for_db, co
     print("\nAccuracy for Medium CSVs: " + str(avg_med_db_acc))
     print("Accuracy for Medium SQL Queries: " + str(avg_med_sql_acc))
     print("Combined Accuracy for Medium: " + str(avg_combined_med_acc) + "\n")
-    return avg_combined_med_acc
+    return avg_combined_med_acc, avg_med_db_acc, avg_med_sql_acc
 
 hard_sql_accuracy = [hard8_accuracy, hard11_accuracy, hard13_accuracy, hard15_accuracy]
 hard_csv_accuracy = []
 def hard_accuracy(hard_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, hard_sql_accuracy):
-    idx = 13
+    idx = 14
     for i in [8, 11, 13, 15]:
         path_gold = f"DB CSVs/Hard{i}.csv"
         path_model = f"Model CSVs/Hard{i}.csv"
@@ -950,16 +949,22 @@ def hard_accuracy(hard_csv_accuracy, gold, model, input_table_schema_for_db, com
     print("\nAccuracy for Hard CSVs: " + str(avg_hard_db_acc))
     print("Accuracy for Hard SQL Queries: " + str(avg_hard_sql_acc))
     print("Combined Accuracy for Hard: " + str(avg_combined_hard_acc) + "\n")
-    return avg_combined_hard_acc
+    return avg_combined_hard_acc, avg_hard_db_acc, avg_hard_sql_acc
 
-easy = easy_accuracy(easy_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, easy_sql_accuracy)
-medium = medium_accuracy(medium_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, medium_sql_accuracy)
-hard = hard_accuracy(hard_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, hard_sql_accuracy)
+easy, easy_csv, easy_sql = easy_accuracy(easy_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, easy_sql_accuracy)
+medium, medium_csv, medium_sql = medium_accuracy(medium_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, medium_sql_accuracy)
+#hard, hard_csv, hard_sql = hard_accuracy(hard_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, hard_sql_accuracy)
 
 print("****SUMMARY****")
 print("Easy Accuracy: " + str(easy))
 print("Medium Accuracy: " + str(medium))
-print("Hard Accuracy: " + str(hard))
+#print("Hard Accuracy: " + str(hard))
 
-accuracy = round(((easy + medium + hard) / 3), 2)
-print("\nOverall Model Accuracy: " + str(accuracy))
+#csv_accuracy = round(((easy_csv + medium_csv + hard_csv) / 3), 2)
+#print("\nOverall Output Accuracy: " + str(csv_accuracy))
+
+#sql_accuracy = round(((easy_sql + medium_sql + hard_sql) / 3), 2)
+#print("\nOverall SQL Accuracy: " + str(sql_accuracy))
+
+#accuracy = round(((easy + medium + hard) / 3), 2)
+#print("\nOverall Model Accuracy: " + str(accuracy))
