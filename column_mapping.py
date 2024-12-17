@@ -492,21 +492,21 @@ GROUP BY SERIES_NAME;'''
 easy13_accuracy = are_queries_ast_similar(easy13_gold,easy13_model)
 
 medium8 = "Identify the top 4 funds by unrealized appreciation in derivative contracts for Q4 2019."
-medium8_gold = '''SELECT fri.SERIES_NAME, SUM(ffnc.UNREALIZED_APPRECIATION) AS TotalUnrealizedAppreciation
-FROM FUND_REPORTED_INFO fri
-JOIN FUND_REPORTED_HOLDING frh ON fri.ACCESSION_NUMBER = frh.ACCESSION_NUMBER
-JOIN FUT_FWD_NONFOREIGNCUR_CONTRACT ffnc ON frh.HOLDING_ID = ffnc.HOLDING_ID
-WHERE fri.YEAR = 2019 AND fri.QUARTER = 4
-GROUP BY fri.SERIES_NAME
-ORDER BY TotalUnrealizedAppreciation DESC
-LIMIT 4;'''
-medium8_model = '''SELECT fri.SERIES_NAME, SUM(ffnc.UNREALIZED_APPRECIATION) AS UnrealizedAppreciation
+medium8_gold = '''SELECT fri.SERIES_NAME, SUM(ffnc.UNREALIZED_APPRECIATION) AS UnrealizedAppreciation
 FROM FUND_REPORTED_INFO fri
 JOIN FUND_REPORTED_HOLDING frh ON fri.ACCESSION_NUMBER = frh.ACCESSION_NUMBER
 JOIN FUT_FWD_NONFOREIGNCUR_CONTRACT ffnc ON frh.HOLDING_ID = ffnc.HOLDING_ID
 WHERE fri.YEAR = 2019 AND fri.QUARTER = 4
 GROUP BY fri.SERIES_NAME
 ORDER BY UnrealizedAppreciation DESC
+LIMIT 4;'''
+medium8_model = '''SELECT fri.SERIES_NAME, SUM(ffnc.UNREALIZED_APPRECIATION) AS TotalUnrealizedAppreciation
+FROM FUND_REPORTED_INFO fri
+JOIN FUND_REPORTED_HOLDING frh ON fri.ACCESSION_NUMBER = frh.ACCESSION_NUMBER
+JOIN FUT_FWD_NONFOREIGNCUR_CONTRACT ffnc ON frh.HOLDING_ID = ffnc.HOLDING_ID
+WHERE fri.YEAR = 2019 AND fri.QUARTER = 4
+GROUP BY fri.SERIES_NAME
+ORDER BY TotalUnrealizedAppreciation DESC
 LIMIT 4;'''
 medium8_accuracy = are_queries_ast_similar(medium8_gold,medium8_model)
 
@@ -803,40 +803,41 @@ def df_accuracy(path_gold, path_model, mapping_list):
     except pd.errors.EmptyDataError as e:
         raise ValueError(f"One of the input files is empty: {e}")
 
-    df_model = df_model.iloc[:, 1:]
+    df_model = df_model.loc[:, ~df_model.columns.str.strip().isin(["", "Unnamed: 0"])]
 
-    # Create dictionaries for mapping from mapping_list
+    # Create dictionaries for mapping
     gold_to_model = {pair[0]: pair[1] for pair in mapping_list if len(pair) == 2}
     model_to_gold = {pair[1]: pair[0] for pair in mapping_list if len(pair) == 2}
 
-    # Columns that are in df_gold but have no mapping to df_model (standalone columns in df_gold)
+    # Columns that are in df_gold but have no mapping to df_model
     gold_only_columns = [pair[0] for pair in mapping_list if len(pair) == 1]
 
+    # Filter columns based on mapping
     df_gold_filtered = df_gold[gold_only_columns + list(gold_to_model.keys())]
-    df_model_filtered = df_model.rename(columns=model_to_gold)
+    df_model_filtered = df_model.filter(items=gold_only_columns + list(gold_to_model.values()))
 
-    # Retain only the columns in df_model that are present in the mapping
-    model_columns = list(gold_to_model.values())
-    df_model_filtered = df_model_filtered.filter(items=gold_only_columns + model_columns)
+    # Dynamically align rows using the common column
+    gold_common_column, model_common_column = mapping_list[0]  # First pair from mapping list
 
-    if len(df_gold_filtered.columns) > len(df_model_filtered.columns):
-        df_gold_filtered = df_gold_filtered[df_model_filtered.columns]
-    elif len(df_model_filtered.columns) > len(df_gold_filtered.columns):
-        df_model_filtered = df_model_filtered[df_gold_filtered.columns]
+    # Set index to align rows without renaming
+    df_gold_filtered = df_gold_filtered.set_index(gold_common_column)
+    df_model_filtered = df_model_filtered.set_index(model_common_column)
 
-    # # Replace NaN with a consistent value for comparison
-    df_gold_filtered.fillna(value=np.nan, inplace=True)
-    df_model_filtered.fillna(value=np.nan, inplace=True)
+    # Align rows: Keep only common indices
+    common_indices = df_gold_filtered.index.intersection(df_model_filtered.index)
+    df_gold_aligned = df_gold_filtered.loc[common_indices]
+    df_model_aligned = df_model_filtered.loc[common_indices]
 
-    # Ensure rows are sorted for accurate comparison
-    # df_gold_filtered = df_gold_filtered.sort_index().reset_index(drop=True)
-    # df_model_filtered = df_model_filtered.sort_index().reset_index(drop=True)
+    # Reorder columns to match
+    df_model_aligned = df_model_aligned.rename(columns=model_to_gold)
+    df_model_aligned = df_model_aligned[df_gold_aligned.columns]
 
-    df_gold_sorted = df_gold_filtered.sort_values(by=df_gold_filtered.columns.tolist()).reset_index(drop=True)
-    df_model_sorted = df_model_filtered.sort_values(by=df_model_filtered.columns.tolist()).reset_index(drop=True)
+    # Reset index for comparison
+    df_gold_aligned = df_gold_aligned.reset_index()
+    df_model_aligned = df_model_aligned.reset_index()
 
     # Compare rows and calculate accuracy
-    matches = (df_gold_sorted.values == df_model_sorted.values).all(axis=1)  # Row-wise match
+    matches = (df_gold_aligned.values == df_model_aligned.values).all(axis=1)
     accuracy = np.mean(matches)
 
     return accuracy
@@ -865,6 +866,7 @@ def easy_accuracy(easy_csv_accuracy, gold, model, input_table_schema_for_db, com
         except Exception as e:
             # Handle any exception by setting accuracy to 0 and logging the error
             accuracy = 0
+            print("EXCEPTION: " + str(e))
             easy_csv_accuracy.append(accuracy)
 
         print(f"Accuracy for Easy{i}: {accuracy:.2f}")
@@ -895,12 +897,13 @@ def medium_accuracy(med_csv_accuracy, gold, model, input_table_schema_for_db, co
 
         response_parsed = json.loads(response)
 
-        try:
+        try:            
             accuracy = df_accuracy(path_gold, path_model, response_parsed["column_mapping_list"])
             med_csv_accuracy.append(accuracy)
         except Exception as e:
             # Handle any exception by setting accuracy to 0 and logging the error
             accuracy = 0
+            print("EXCEPTION: " + str(e))
             med_csv_accuracy.append(accuracy)
         
         print(f"Accuracy for Medium{i}: {accuracy:.2f}")
@@ -938,6 +941,7 @@ def hard_accuracy(hard_csv_accuracy, gold, model, input_table_schema_for_db, com
         except Exception as e:
             # Handle any exception by setting accuracy to 0 and logging the error
             accuracy = 0
+            print("EXCEPTION: " + str(e))
             hard_csv_accuracy.append(accuracy)
 
         print(f"Accuracy for Hard{i}: {accuracy:.2f}")
@@ -951,20 +955,20 @@ def hard_accuracy(hard_csv_accuracy, gold, model, input_table_schema_for_db, com
     print("Combined Accuracy for Hard: " + str(avg_combined_hard_acc) + "\n")
     return avg_combined_hard_acc, avg_hard_db_acc, avg_hard_sql_acc
 
-easy, easy_csv, easy_sql = easy_accuracy(easy_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, easy_sql_accuracy)
+#easy, easy_csv, easy_sql = easy_accuracy(easy_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, easy_sql_accuracy)
 medium, medium_csv, medium_sql = medium_accuracy(medium_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, medium_sql_accuracy)
 #hard, hard_csv, hard_sql = hard_accuracy(hard_csv_accuracy, gold, model, input_table_schema_for_db, complete_user_prompts, system_prompt, client, hard_sql_accuracy)
 
 print("****SUMMARY****")
-print("Easy Accuracy: " + str(easy))
+#print("Easy Accuracy: " + str(easy))
 print("Medium Accuracy: " + str(medium))
 #print("Hard Accuracy: " + str(hard))
 
-#csv_accuracy = round(((easy_csv + medium_csv + hard_csv) / 3), 2)
-#print("\nOverall Output Accuracy: " + str(csv_accuracy))
+# csv_accuracy = round(((easy_csv + medium_csv + hard_csv) / 3), 2)
+# print("\nOverall Output Accuracy: " + str(csv_accuracy))
 
-#sql_accuracy = round(((easy_sql + medium_sql + hard_sql) / 3), 2)
-#print("\nOverall SQL Accuracy: " + str(sql_accuracy))
+# sql_accuracy = round(((easy_sql + medium_sql + hard_sql) / 3), 2)
+# print("Overall SQL Accuracy: " + str(sql_accuracy))
 
-#accuracy = round(((easy + medium + hard) / 3), 2)
-#print("\nOverall Model Accuracy: " + str(accuracy))
+# accuracy = round(((easy + medium + hard) / 3), 2)
+# print("Overall Model Accuracy: " + str(accuracy))
